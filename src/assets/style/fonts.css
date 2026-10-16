@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@font-face {
+    font-family: 'primary';
+    src: url("@/assets/fonts/IBMPlexMono-Regular.ttf") format("truetype");
+}
+
+@utility font-primary {
+    font-family: 'primary', serif;
+}

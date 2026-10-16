@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@import "@/assets/style/fonts.css";
+
+:root {
+    --primary: #9efd45;
+    --secondary: #ffffff;
+    --bg: #000000;
+    --card: #1b1b1b;
+    --dark: #0e0e0e;
+    --border-color: #252525;
+    --muted: #8c8c8c;
+
+    --text-primary: #000000;
+    --text-secondary: #ffffff;
+
+    --md-bg: #043325;
+    --md-border: #2ca569;
+
+    --docx-bg: #041733;
+    --docx-border: #2c58a5;
+}
+
+@theme {
+    --color-primary: var(--primary);
+    --color-secondary: var(--secondary);
+    --color-bg: var(--bg);
+    --color-card: var(--card);
+    --color-dark: var(--dark);
+    --color-border-color: var(--border-color);
+    --color-muted: var(--muted);
+
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+
+    --color-docx-bg: var(--docx-bg);
+    --color-docx-border: var(--docx-border);
+}
+
+@layer base {
+    body {
+        @apply bg-bg font-primary text-secondary;
+    }
+}
+
+@utility flex-center {
+    @apply flex items-center justify-center;
+}
+
+@utility normal-border {
+    @apply border-2 border-border-color;
+}

@@ -5,8 +5,7 @@ import {computed} from "vue";
 import {Icon} from "@iconify/vue";
 
 const props = defineProps<{
-  file: UserFile,
-  muted: boolean
+  file: UserFile
 }>();
 
 const name = computed(() => {
@@ -25,7 +24,7 @@ const styles = {
     border: "docx-border"
   },
   [FileType.Text]: {
-    bg: "card",
+    bg: "dark",
     border: "border-color "
   }
 };
@@ -49,26 +48,24 @@ const emits = defineEmits(["delete"]);
        class="w-30 h-40 flex flex-col p-2 justify-between rounded-2xl select-none">
     <div class="flex items-start justify-between">
       <div class="flex flex-col gap-1.5">
-        <p :class="{'text-transparent bg-black/50! rounded-2xl':props.muted}" class="text-sm transition-colors">
+        <p class="text-sm wrap-anywhere">
           {{ name }}
         </p>
         <Icon v-if="props.file.loading" class="animate-spin" icon="lucide:loader-circle"/>
-        <p v-else :class="{'text-transparent bg-black/50! rounded-2xl':props.muted}" class="text-xs transition-colors">
+        <p v-else class="text-xs">
           {{ HumanFileSize(file.file.size) }}
         </p>
       </div>
 
       <button
-          :class="{'opacity-0': props.muted}"
-          :disabled="props.muted"
           :style="`background-color:${style.border}`"
-          class="aspect-square rounded-full p-0.5 not-disabled:hover:cursor-pointer transition-opacity"
+          class="aspect-square rounded-full p-0.5 hover:cursor-pointer"
           @click="emits('delete')">
         <Icon icon="lucide:x"/>
       </button>
     </div>
 
-    <p :class="{'text-transparent bg-black/50! rounded-2xl':props.muted}" :style="`background-color:${style.border}`"
-       class="text-sm size-min px-2 rounded-full transition-colors">{{ props.file.type }}</p>
+    <p :style="`background-color:${style.border}`"
+       class="text-sm size-min px-2 rounded-full">{{ props.file.type }}</p>
   </div>
 </template>

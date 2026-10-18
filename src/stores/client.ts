@@ -28,7 +28,10 @@ export interface Category {
 
 export const useClient = defineStore('client', () => {
     const file = ref<UserFile | null>();
-    const raw = ref("");
+    const raw = ref<{
+        text: string;
+        type: FileType;
+    } | null>(null);
 
     const counter = ref<number>();
 

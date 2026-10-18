@@ -1,28 +1,66 @@
 <script lang="ts" setup>
-import {useClient} from "@/stores/client.ts";
+import {FileType, useClient} from "@/stores/client.ts";
 import HomeButton from "@/components/features/home/HomeButton.vue";
 import Card from "@/components/ui/Card.vue";
 import FileDialog from "@/components/ui/FileDialog.vue";
-import File from "@/components/features/home/File.vue";
+import File from "@/components/ui/File.vue";
+import FileDropZone from "@/components/ui/FileDropZone.vue";
+import {Icon, loadIcon} from "@iconify/vue";
+import {useDialog} from "@/stores/dialog.ts";
+import AddTextDialog from "@/components/dialogs/AddTextDialog.vue";
+import TextArtifact from "@/components/ui/TextArtifact.vue";
 
 const clientStore = useClient();
+const dialog = useDialog();
+
+async function AddText() {
+  let result = await dialog.GetResult(AddTextDialog, "Добавить текст");
+
+  result.text = result.text.trim();
+  if (result.text.length == 0) {
+    return;
+  }
+
+  clientStore.raw = result;
+}
+
+loadIcon("lucide:arrow-right");
 </script>
 
 <template>
   <div class="flex items-center size-full relative p-5">
     <!-- artifacts -->
-    <Card class="h-full min-w-73 rounded-3xl p-5 flex flex-col gap-10">
-      <h1 class="font-bold text-3xl">Файлы</h1>
+    <Card class="h-full w-73 rounded-3xl p-5 flex flex-col gap-10 relative">
+      <h1 class="font-bold text-3xl">Артефакты</h1>
 
+      <FileDropZone
+          v-slot="{ isOverDropZone }"
+          @change="clientStore.SetFile"
+          class="size-full flex-center absolute-center">
+        <div v-if="!clientStore.file" class="absolute-center text-center">
+          <p class="text-muted">Перетащите сюда файлы</p>
+        </div>
+
+        <!-- blur overlay -->
+        <div v-motion-fade v-if="isOverDropZone"
+             class="size-full flex-center backdrop-blur backdrop-brightness-75 rounded-xl">
+          <Icon icon="lucide:upload" class="size-15"/>
+        </div>
+      </FileDropZone>
+
+      <!-- artifacts -->
       <div class="grid grid-cols-2 gap-2">
         <File
             @delete="() => clientStore.SetFile(null)"
             v-motion-pop
             v-if="clientStore.file"
             :file="clientStore.file"/>
-      </div>
-      <div class="size-full flex-center">
-        <p class="text-muted">Перетащите сюда файлы</p>
+        <TextArtifact
+            v-motion-pop
+            @delete="() => clientStore.raw = null"
+            v-if="clientStore.raw"
+            :text="clientStore.raw.text"
+            :type="clientStore.raw.type as FileType.Text | FileType.Markdown"/>
       </div>
     </Card>
 
@@ -31,14 +69,18 @@ const clientStore = useClient();
       <h1 class="text-7xl py-20">gourd</h1>
 
       <div class="flex-center gap-5">
-        <HomeButton icon="lucide:plus" label="Текст"/>
+        <!-- add text -->
+        <HomeButton @click="AddText" icon="lucide:plus" label="Текст"/>
 
+        <!-- add file -->
         <FileDialog v-slot="{ open }" @change="clientStore.SetFile">
           <HomeButton @click="open" icon="lucide:paperclip" label="Файл"/>
         </FileDialog>
 
+        <!-- forward -->
         <HomeButton
-            v-if="clientStore.file || clientStore.raw.length > 0"
+            v-motion-pop
+            v-if="(clientStore.file && !clientStore.file.loading) || clientStore.raw"
             variant="primary"
             icon="lucide:arrow-right"
             label="Дальше"/>

@@ -9,6 +9,7 @@ import {Icon, loadIcon} from "@iconify/vue";
 import {useDialog} from "@/stores/dialog.ts";
 import AddTextDialog from "@/components/dialogs/AddTextDialog.vue";
 import TextArtifact from "@/components/ui/TextArtifact.vue";
+import {useRouter} from "vue-router";
 
 const clientStore = useClient();
 const dialog = useDialog();
@@ -23,6 +24,8 @@ async function AddText() {
 
   clientStore.raw = result;
 }
+
+const router = useRouter();
 
 loadIcon("lucide:arrow-right");
 </script>
@@ -79,6 +82,7 @@ loadIcon("lucide:arrow-right");
 
         <!-- forward -->
         <HomeButton
+            @click="router.push('/results')"
             v-motion-pop
             v-if="(clientStore.file && !clientStore.file.loading) || clientStore.raw"
             variant="primary"

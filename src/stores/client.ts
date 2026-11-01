@@ -83,5 +83,28 @@ export const useClient = defineStore('client', () => {
         file.value.loading = false;
     }
 
-    return {file, raw, counter, FetchCounter, categories, FetchCategories, SetFile};
+    async function ProcessRaw() {
+        // why is it called that way? wtf??
+        if (!raw.value?.text || raw.value.text.length === 0) {
+            return;
+        }
+
+        return await Client.documents.postDocuments({
+            rules: enabledRuleIds.value,
+            text: raw.value.text,
+            type: raw.value.type
+        });
+    }
+
+    return {
+        file,
+        raw,
+        counter,
+        enabledRuleIds,
+        FetchCounter,
+        categories,
+        FetchCategories,
+        SetFile,
+        ProcessRaw
+    };
 });

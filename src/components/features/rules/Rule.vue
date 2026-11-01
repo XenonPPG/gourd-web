@@ -1,13 +1,30 @@
 <script lang="ts" setup>
-import type {Rule} from "@/stores/client.ts";
+import {type Rule, useClient} from "@/stores/client.ts";
 import Switch from "@/components/ui/Switch.vue";
 import {useRulesStore} from "@/stores/rules";
+import {onMounted, watch} from "vue";
 
 const props = defineProps<{
   rule: Rule
 }>();
 
+const client = useClient();
 const rulesStore = useRulesStore();
+
+function ToggleRule() {
+  if (!props.rule.rule.id) {
+    return;
+  }
+
+  if (props.rule.enabled) {
+    client.enabledRuleIds.push(props.rule.rule.id);
+  } else {
+    client.enabledRuleIds = client.enabledRuleIds.filter(id => id !== props.rule.rule.id);
+  }
+}
+
+onMounted(ToggleRule);
+watch(() => props.rule.enabled, ToggleRule);
 </script>
 
 <template>

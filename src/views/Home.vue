@@ -1,63 +1,94 @@
 <script lang="ts" setup>
-import Button from "@/components/ui/Button.vue";
-import SafeIcon from "@/components/ui/SafeIcon.vue";
-import MainTextarea from "@/components/features/home/MainTextarea.vue";
-import {useClient, type UserFile} from "@/stores/client.ts";
-import FileDialog from "@/components/ui/FileDialog.vue";
+import {FileType, useClient} from "@/stores/client.ts";
+import HomeButton from "@/components/features/home/HomeButton.vue";
 import Card from "@/components/ui/Card.vue";
+import FileDialog from "@/components/ui/FileDialog.vue";
+import File from "@/components/ui/File.vue";
 import FileDropZone from "@/components/ui/FileDropZone.vue";
-import HomeFile from "@/components/features/home/HomeFile.vue";
+import {Icon, loadIcon} from "@iconify/vue";
+import {useDialog} from "@/stores/dialog.ts";
+import AddTextDialog from "@/components/dialogs/AddTextDialog.vue";
+import TextArtifact from "@/components/ui/TextArtifact.vue";
+import {useRouter} from "vue-router";
 
 const clientStore = useClient();
+const dialog = useDialog();
+
+async function AddText() {
+  let result = await dialog.GetResult(AddTextDialog, "Добавить текст");
+
+  result.text = result.text.trim();
+  if (result.text.length == 0) {
+    return;
+  }
+
+  clientStore.raw = result;
+}
+
+const router = useRouter();
+
+loadIcon("lucide:arrow-right");
 </script>
 
 <template>
-  <div class="flex-center size-full">
-    <div class="flex-center flex-col relative">
+  <div class="flex items-center size-full relative p-5">
+    <!-- artifacts -->
+    <Card class="h-full w-73 rounded-3xl p-5 flex flex-col gap-10 relative">
+      <h1 class="font-bold text-3xl">Артефакты</h1>
+
+      <FileDropZone
+          v-slot="{ isOverDropZone }"
+          @change="clientStore.SetFile"
+          class="size-full flex-center absolute-center">
+        <div v-if="!clientStore.file" class="absolute-center text-center">
+          <p class="text-muted">Перетащите сюда файлы</p>
+        </div>
+
+        <!-- blur overlay -->
+        <div v-motion-fade v-if="isOverDropZone"
+             class="size-full flex-center backdrop-blur backdrop-brightness-75 rounded-xl">
+          <Icon icon="lucide:upload" class="size-15"/>
+        </div>
+      </FileDropZone>
+
+      <!-- artifacts -->
+      <div class="grid grid-cols-2 gap-2">
+        <File
+            @delete="() => clientStore.SetFile(null)"
+            v-motion-pop
+            v-if="clientStore.file"
+            :file="clientStore.file"/>
+        <TextArtifact
+            v-motion-pop
+            @delete="() => clientStore.raw = null"
+            v-if="clientStore.raw"
+            :text="clientStore.raw.text"
+            :type="clientStore.raw.type as FileType.Text | FileType.Markdown"/>
+      </div>
+    </Card>
+
+    <!-- central menu -->
+    <div class="flex-center flex-col absolute-center">
       <h1 class="text-7xl py-20">gourd</h1>
 
-      <div class="flex flex-col gap-2">
-        <div class="flex gap-2 relative">
-          <!-- input part -->
-          <FileDropZone v-slot="{ isOverDropZone }" @change="clientStore.SetFile">
-            <!-- attached files -->
-            <HomeFile :file="clientStore.file as UserFile | null" @delete="clientStore.SetFile(null)"/>
+      <div class="flex-center gap-5">
+        <!-- add text -->
+        <HomeButton @click="AddText" icon="lucide:plus" label="Текст"/>
 
-            <Card class="flex gap-2 relative overflow-hidden">
-              <MainTextarea class="w-150 min-h-40 max-h-80"/>
+        <!-- add file -->
+        <FileDialog v-slot="{ open }" @change="clientStore.SetFile">
+          <HomeButton @click="open" icon="lucide:paperclip" label="Файл"/>
+        </FileDialog>
 
-              <!-- blur overlay -->
-              <div v-if="isOverDropZone" v-motion-fade class="absolute inset-0 flex-center size-full backdrop-blur-sm">
-                <p class="text-2xl">Загрузить файл</p>
-              </div>
-            </Card>
-          </FileDropZone>
-
-          <!-- send button -->
-          <Button v-if="clientStore.file || clientStore.raw.length > 0" v-motion-fade
-                  class="size-min aspect-square rounded-full absolute left-full ml-2">
-            <SafeIcon class="size-6 -rotate-45 translate-y-1" icon="lucide:send"/>
-          </Button>
-        </div>
-        <div class="flex items-center gap-1">
-          <FileDialog
-              v-slot="{ open, disabled }"
-              :disabled="clientStore.raw.length > 0"
-              @change="clientStore.SetFile">
-            <Button
-                :disabled="disabled"
-                class="aspect-square rounded-full size-min"
-                variant="secondary"
-                @click="open">
-              <SafeIcon class="size-6" icon="lucide:paperclip"/>
-            </Button>
-          </FileDialog>
-        </div>
+        <!-- forward -->
+        <HomeButton
+            @click="router.push('/results')"
+            v-motion-pop
+            v-if="(clientStore.file && !clientStore.file.loading) || clientStore.raw"
+            variant="primary"
+            icon="lucide:arrow-right"
+            label="Дальше"/>
       </div>
-      <h1
-          v-if="clientStore.raw.length > 0 || clientStore.file"
-          class="text-sm text-text-primary bg-secondary px-5 rounded-full absolute -bottom-10"
-      >Загрузка нескольких файлов пока недоступна</h1>
     </div>
   </div>
 </template>

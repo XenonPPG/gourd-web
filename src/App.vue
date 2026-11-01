@@ -2,6 +2,7 @@
 import {useClient} from "@/stores/client.ts";
 import {onMounted} from "vue";
 import Sidebar from "@/components/features/sidebar/Sidebar.vue";
+import Dialog from "@/components/features/Dialog.vue";
 
 const client = useClient();
 onMounted(client.FetchCounter);
@@ -15,4 +16,6 @@ onMounted(client.FetchCounter);
       <RouterView/>
     </div>
   </div>
+
+  <Dialog/>
 </template>

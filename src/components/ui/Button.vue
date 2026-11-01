@@ -8,7 +8,7 @@ const props = withDefaults(defineProps<{
 
 const variants = {
   'accent': 'bg-primary text-secondary hover:brightness-110',
-  'primary': 'bg-secondary text-text-primary not-disabled:hover:bg-secondary-light disabled:bg-dark',
+  'primary': 'bg-secondary text-text-primary not-disabled:hover:bg-secondary-light disabled:brightness-70',
   'secondary': 'bg-card border-2 border-border-color not-disabled:hover:brightness-120 disabled:brightness-70',
   'ghost': 'hover:bg-dark'
 };

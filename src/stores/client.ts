@@ -47,10 +47,16 @@ export const useClient = defineStore('client', () => {
         for (const category of response.data) {
             const rules: Rule[] = [];
             for (const rule of category.rules!) {
+                const enabled = !!rule.enabled_by_default;
+
                 rules.push({
                     rule: rule,
-                    enabled: !!rule.enabled_by_default
+                    enabled: enabled,
                 });
+
+                if (enabled) {
+                    enabledRuleIds.value.push(rule.id!);
+                }
             }
 
             categories.value.push({

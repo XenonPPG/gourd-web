@@ -5,7 +5,11 @@ import Sidebar from "@/components/features/sidebar/Sidebar.vue";
 import Dialog from "@/components/features/Dialog.vue";
 
 const client = useClient();
-onMounted(client.FetchCounter);
+
+onMounted(async () => {
+  await client.FetchCounter();
+  await client.FetchCategories();
+});
 </script>
 
 <template>

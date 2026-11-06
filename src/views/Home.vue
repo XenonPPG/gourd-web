@@ -73,6 +73,11 @@ loadIcon("lucide:arrow-right");
           <HomeButton @click="open" icon="lucide:paperclip" label="Файл"/>
         </FileDialog>
 
+        <!-- go to rules -->
+        <RouterLink to="/rules">
+          <HomeButton icon="lucide:box" label="Правила обработки"/>
+        </RouterLink>
+
         <!-- forward -->
         <HomeButton
             @click="router.push('/results')"

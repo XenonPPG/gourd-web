@@ -10,7 +10,7 @@ const data = ref<any | null>(null);
 
 onMounted(async () => {
   console.log("processing...");
-  const result = await clientStore.ProcessRaw() as unknown as any;
+  const result = await clientStore.Process() as unknown as any;
 
   if (result?.data?.output) {
     console.log("returned: ", result.data?.output);

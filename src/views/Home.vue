@@ -1,14 +1,13 @@
 <script lang="ts" setup>
-import {FileType, useClient} from "@/stores/client.ts";
+import {useClient} from "@/stores/client.ts";
 import HomeButton from "@/components/features/home/HomeButton.vue";
 import Card from "@/components/ui/Card.vue";
 import FileDialog from "@/components/ui/FileDialog.vue";
-import File from "@/components/ui/File.vue";
+import Artifact from "@/components/ui/File.vue";
 import FileDropZone from "@/components/ui/FileDropZone.vue";
 import {Icon, loadIcon} from "@iconify/vue";
 import {useDialog} from "@/stores/dialog.ts";
 import AddTextDialog from "@/components/dialogs/AddTextDialog.vue";
-import TextArtifact from "@/components/ui/TextArtifact.vue";
 import {useRouter} from "vue-router";
 
 const clientStore = useClient();
@@ -22,7 +21,7 @@ async function AddText() {
     return;
   }
 
-  clientStore.raw = result;
+  await clientStore.SetRaw(result.text, result.type);
 }
 
 const router = useRouter();
@@ -53,17 +52,11 @@ loadIcon("lucide:arrow-right");
 
       <!-- artifacts -->
       <div class="grid grid-cols-2 gap-2">
-        <File
+        <Artifact
             @delete="() => clientStore.SetFile(null)"
             v-motion-pop
             v-if="clientStore.file"
             :file="clientStore.file"/>
-        <TextArtifact
-            v-motion-pop
-            @delete="() => clientStore.raw = null"
-            v-if="clientStore.raw"
-            :text="clientStore.raw.text"
-            :type="clientStore.raw.type as FileType.Text | FileType.Markdown"/>
       </div>
     </Card>
 
@@ -84,7 +77,7 @@ loadIcon("lucide:arrow-right");
         <HomeButton
             @click="router.push('/results')"
             v-motion-pop
-            v-if="(clientStore.file && !clientStore.file.loading) || clientStore.raw"
+            v-if="clientStore.file && !clientStore.file.loading"
             variant="primary"
             icon="lucide:arrow-right"
             label="Дальше"/>

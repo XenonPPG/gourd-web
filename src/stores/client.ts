@@ -28,10 +28,6 @@ export interface Category {
 
 export const useClient = defineStore('client', () => {
     const file = ref<UserFile | null>();
-    const raw = ref<{
-        text: string;
-        type: FileType;
-    } | null>(null);
 
     const counter = ref<number>();
 
@@ -64,7 +60,7 @@ export const useClient = defineStore('client', () => {
         }
     }
 
-    async function SetFile(f: File | null) {
+    async function SetFile(f: File | null, overrideType?: FileType) {
         if (f === null) {
             file.value = null;
             return;
@@ -76,35 +72,42 @@ export const useClient = defineStore('client', () => {
             file: f,
             data: null,
             loading: true,
-            type: parts[parts.length - 1] as FileType
+            type: overrideType ?? parts[parts.length - 1] as FileType
         };
 
         file.value.data = await f.arrayBuffer();
         file.value.loading = false;
     }
 
-    async function ProcessRaw() {
-        // why is it called that way? wtf??
-        if (!raw.value?.text || raw.value.text.length === 0) {
+    async function SetRaw(content: string, type: FileType) {
+        const file = new File([content], "Артефакт 1", {
+            type: "text/plain"
+        });
+
+        return SetFile(file, type);
+    }
+
+    async function Process() {
+        if (!file.value) {
             return;
         }
 
-        return await Client.documents.postDocuments({
-            rules: enabledRuleIds.value,
-            text: raw.value.text,
-            type: raw.value.type
+        await Client.documents.fileCreate({
+            file: file.value.file,
+            fileType: file.value.type,
+            rules: enabledRuleIds.value
         });
     }
 
     return {
         file,
-        raw,
         counter,
         enabledRuleIds,
         FetchCounter,
         categories,
         FetchCategories,
         SetFile,
-        ProcessRaw
+        SetRaw,
+        Process,
     };
 });

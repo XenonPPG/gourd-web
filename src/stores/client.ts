@@ -1,4 +1,4 @@
-import {ref} from 'vue';
+import {computed, ref} from 'vue';
 import {defineStore} from 'pinia';
 import Client from "@/api/client.ts";
 import type {GatewayCategoryDTO, GatewayRuleDTO} from "@/api/gen/Api.ts";
@@ -93,14 +93,16 @@ export const useClient = defineStore('client', () => {
         return SetFile(file, type);
     }
 
+    const canProcess = computed(() => !!file.value);
+
     async function Process() {
-        if (!file.value) {
+        if (!canProcess.value) {
             return;
         }
 
         await Client.documents.fileCreate({
-            file: file.value.file,
-            fileType: file.value.type,
+            file: file.value!.file,
+            fileType: file.value!.type,
             rules: enabledRuleIds.value
         });
     }
@@ -114,6 +116,7 @@ export const useClient = defineStore('client', () => {
         FetchCategories,
         SetFile,
         SetRaw,
+        canProcess,
         Process,
     };
 });

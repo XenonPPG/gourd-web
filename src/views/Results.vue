@@ -4,12 +4,16 @@ import {onMounted, ref} from "vue";
 import {useClient} from "@/stores/client.ts";
 import Card from "@/components/ui/Card.vue";
 import Button from "@/components/ui/Button.vue";
+import {useRouter} from "vue-router";
 
 const clientStore = useClient();
 const data = ref<any | null>(null);
 
 onMounted(async () => {
-  console.log("processing...");
+  if (!clientStore.canProcess) {
+    await useRouter().push("/");
+  }
+
   const result = await clientStore.Process() as unknown as any;
 
   if (result?.data?.output) {

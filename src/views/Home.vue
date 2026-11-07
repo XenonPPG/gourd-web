@@ -62,7 +62,7 @@ loadIcon("lucide:arrow-right");
 
     <!-- central menu -->
     <div class="flex-center flex-col absolute-center">
-      <h1 class="text-7xl py-20">gourd</h1>
+      <h1 class="text-7xl bottom-35 absolute">gourd</h1>
 
       <div class="flex-center gap-5">
         <!-- add text -->

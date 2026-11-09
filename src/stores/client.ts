@@ -1,6 +1,6 @@
 import {computed, ref} from 'vue';
 import {defineStore} from 'pinia';
-import Client from "@/api/client.ts";
+import Client, {BaseURL} from "@/api/client.ts";
 import type {GatewayCategoryDTO, GatewayRuleDTO} from "@/api/gen/Api.ts";
 
 export enum FileType {
@@ -9,11 +9,12 @@ export enum FileType {
     Text = "txt",
 }
 
-export interface UserFile {
+export interface Artifact {
     file: File;
     data: ArrayBuffer | null;
     loading: boolean;
     type: FileType;
+    isRaw: boolean;
 }
 
 export interface Rule {
@@ -27,7 +28,7 @@ export interface Category {
 }
 
 export const useClient = defineStore('client', () => {
-    const file = ref<UserFile | null>();
+    const file = ref<Artifact | null>();
 
     const counter = ref<number>();
 
@@ -66,7 +67,7 @@ export const useClient = defineStore('client', () => {
         }
     }
 
-    async function SetFile(f: File | null, overrideType?: FileType) {
+    async function SetFile(f: File | null, overrideType?: FileType, isRaw = false) {
         if (f === null) {
             file.value = null;
             return;
@@ -78,7 +79,8 @@ export const useClient = defineStore('client', () => {
             file: f,
             data: null,
             loading: true,
-            type: overrideType ?? parts[parts.length - 1] as FileType
+            type: overrideType ?? parts[parts.length - 1] as FileType,
+            isRaw: isRaw,
         };
 
         file.value.data = await f.arrayBuffer();
@@ -90,7 +92,7 @@ export const useClient = defineStore('client', () => {
             type: "text/plain"
         });
 
-        return SetFile(file, type);
+        return SetFile(file, type, true);
     }
 
     const canProcess = computed(() => !!file.value);
@@ -100,10 +102,29 @@ export const useClient = defineStore('client', () => {
             return;
         }
 
-        await Client.documents.fileCreate({
-            file: file.value!.file,
-            fileType: file.value!.type,
-            rules: enabledRuleIds.value
+        // auto generated api is broken. lmao
+        const form = new FormData();
+        form.append("file", file.value!.file);
+        form.append("fileType", file.value!.type);
+        for (const id of enabledRuleIds.value) {
+            form.append("rules", id);
+        }
+
+        const response = await fetch(`${BaseURL}/documents/file`, {
+            method: "POST",
+            body: form,
+        });
+
+        if (!response.ok) {
+            const body = await response.json().catch(() => null);
+            throw new Error(body?.error ?? response.statusText);
+        }
+
+        const blob = await response.blob();
+
+        return new File([blob], file.value!.file.name, {
+            type: file.value!.file.type,
+            lastModified: Date.now(),
         });
     }
 

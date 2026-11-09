@@ -7,18 +7,16 @@ import Button from "@/components/ui/Button.vue";
 import {useRouter} from "vue-router";
 
 const clientStore = useClient();
-const data = ref<any | null>(null);
+const data = ref<File | null>(null);
 
 onMounted(async () => {
   if (!clientStore.canProcess) {
     await useRouter().push("/");
   }
 
-  const result = await clientStore.Process() as unknown as any;
-
-  if (result?.data?.output) {
-    console.log("returned: ", result.data?.output);
-    data.value = result.data?.output;
+  const result = await clientStore.Process();
+  if (result) {
+    data.value = result;
   }
 });
 </script>

@@ -7,17 +7,16 @@
     --bg: #000000;
     --card: #1b1b1b;
     --dark: #0e0e0e;
+    --medium: #131313;
+    --light: #2c2c2c;
     --border-color: #252525;
     --muted: #8c8c8c;
 
     --text-primary: #000000;
     --text-secondary: #ffffff;
 
-    --md-bg: #043325;
-    --md-border: #2ca569;
-
-    --docx-bg: #051d45;
-    --docx-border: #2c58a5;
+    --md: #6350b3;
+    --docx: #254785;
 }
 
 @theme {
@@ -26,14 +25,16 @@
     --color-bg: var(--bg);
     --color-card: var(--card);
     --color-dark: var(--dark);
+    --color-medium: var(--medium);
+    --color-light: var(--light);
     --color-border-color: var(--border-color);
     --color-muted: var(--muted);
 
     --color-text-primary: var(--text-primary);
     --color-text-secondary: var(--text-secondary);
 
-    --color-docx-bg: var(--docx-bg);
-    --color-docx-border: var(--docx-border);
+    --color-docx: var(--docx);
+    --color-md: var(--md);
 }
 
 @layer base {

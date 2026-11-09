@@ -3,7 +3,7 @@ import {useClient} from "@/stores/client.ts";
 import HomeButton from "@/components/features/home/HomeButton.vue";
 import Card from "@/components/ui/Card.vue";
 import FileDialog from "@/components/ui/FileDialog.vue";
-import Artifact from "@/components/ui/File.vue";
+import Artifact from "@/components/ui/Artifact.vue";
 import FileDropZone from "@/components/ui/FileDropZone.vue";
 import {Icon, loadIcon} from "@iconify/vue";
 import {useDialog} from "@/stores/dialog.ts";
@@ -32,7 +32,7 @@ loadIcon("lucide:arrow-right");
 <template>
   <div class="flex items-center size-full relative p-5">
     <!-- artifacts -->
-    <Card class="h-full w-73 rounded-3xl p-5 flex flex-col gap-10 relative">
+    <Card class="h-full w-80 rounded-3xl p-5 flex flex-col gap-10 relative">
       <h1 class="font-bold text-3xl">Артефакты</h1>
 
       <FileDropZone
@@ -51,12 +51,12 @@ loadIcon("lucide:arrow-right");
       </FileDropZone>
 
       <!-- artifacts -->
-      <div class="grid grid-cols-2 gap-2">
+      <div class="flex flex-col gap-2">
         <Artifact
             @delete="() => clientStore.SetFile(null)"
             v-motion-pop
             v-if="clientStore.file"
-            :file="clientStore.file"/>
+            :artifact="clientStore.file"/>
       </div>
     </Card>
 

@@ -7,7 +7,6 @@ import Dialog from "@/components/features/Dialog.vue";
 const client = useClient();
 
 onMounted(async () => {
-  await client.FetchCounter();
   await client.FetchCategories();
 });
 </script>

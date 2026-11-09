@@ -41,30 +41,35 @@ export const useClient = defineStore('client', () => {
     }
 
     async function FetchCategories() {
-        categories.value = [];
-
-        // TODO: fetch correct type instead of md always
         const response = await Client.rules.rulesList();
+
+        const newCategories: Category[] = [];
+        const newEnabledIds: string[] = [];
+
         for (const category of response.data) {
             const rules: Rule[] = [];
+
             for (const rule of category.rules!) {
                 const enabled = !!rule.enabled_by_default;
 
                 rules.push({
-                    rule: rule,
-                    enabled: enabled,
+                    rule: {
+                        ...rule,
+                        available_formats: [...(rule.available_formats ?? [])].sort(),
+                    },
+                    enabled,
                 });
 
                 if (enabled) {
-                    enabledRuleIds.value.push(rule.id!);
+                    newEnabledIds.push(rule.id!);
                 }
             }
 
-            categories.value.push({
-                category: category,
-                rules: rules
-            });
+            newCategories.push({category, rules});
         }
+
+        categories.value = newCategories;
+        enabledRuleIds.value = newEnabledIds;
     }
 
     async function SetFile(f: File | null, overrideType?: FileType, isRaw = false) {

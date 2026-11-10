@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {useClient} from "@/stores/client.ts";
+import {FileType, useClient} from "@/stores/client.ts";
 import HomeButton from "@/components/features/home/HomeButton.vue";
 import Card from "@/components/ui/Card.vue";
 import FileDialog from "@/components/ui/FileDialog.vue";
@@ -7,14 +7,20 @@ import Artifact from "@/components/ui/Artifact.vue";
 import FileDropZone from "@/components/ui/FileDropZone.vue";
 import {Icon, loadIcon} from "@iconify/vue";
 import {useDialog} from "@/stores/dialog.ts";
-import AddTextDialog from "@/components/dialogs/AddTextDialog.vue";
+import AddTextDialog, {type AddTextDialogResult} from "@/components/dialogs/AddTextDialog.vue";
 import {useRouter} from "vue-router";
 
 const clientStore = useClient();
 const dialog = useDialog();
 
-async function AddText() {
-  let result = await dialog.GetResult(AddTextDialog, "Добавить текст");
+async function OpenTextDialogue(defaultValue?: AddTextDialogResult) {
+  let result = await dialog.GetResult<AddTextDialogResult>(
+      AddTextDialog,
+      "Добавить текст",
+      defaultValue ? {
+        text: defaultValue?.text,
+        type: defaultValue?.type,
+      } : undefined);
 
   result.text = result.text.trim();
   if (result.text.length == 0) {
@@ -22,6 +28,27 @@ async function AddText() {
   }
 
   await clientStore.SetRaw(result.text, result.type);
+}
+
+function handleArtifactAction(action: string) {
+  switch (action) {
+    case "delete":
+      clientStore.SetFile(null);
+      break;
+    case "edit":
+      if (!clientStore.file?.data ||
+          !(clientStore.file?.type == FileType.Text ||
+              clientStore.file?.type == FileType.Markdown)) {
+        return;
+      }
+
+      const decoder = new TextDecoder("utf-8");
+
+      OpenTextDialogue({
+        text: decoder.decode(clientStore.file.data),
+        type: clientStore.file.type
+      });
+  }
 }
 
 const router = useRouter();
@@ -32,7 +59,7 @@ loadIcon("lucide:arrow-right");
 <template>
   <div class="flex items-center size-full relative p-5">
     <!-- artifacts -->
-    <Card class="h-full w-80 rounded-3xl p-5 flex flex-col gap-10 relative">
+    <Card class="h-full w-90 rounded-3xl p-3 py-5 flex flex-col gap-10 relative">
       <h1 class="font-bold text-3xl">Артефакты</h1>
 
       <FileDropZone
@@ -53,7 +80,18 @@ loadIcon("lucide:arrow-right");
       <!-- artifacts -->
       <div class="flex flex-col gap-2">
         <Artifact
-            @delete="() => clientStore.SetFile(null)"
+            @action="handleArtifactAction"
+            :buttons="[
+              {
+                id: 'edit',
+                icon: 'lucide:pencil',
+                condition: () => clientStore.file?.type !== FileType.Docx
+              },
+              {
+                id: 'delete',
+                icon: 'lucide:x',
+              },
+            ]"
             v-motion-pop
             v-if="clientStore.file"
             :artifact="clientStore.file"/>
@@ -66,7 +104,7 @@ loadIcon("lucide:arrow-right");
 
       <div class="flex-center gap-5">
         <!-- add text -->
-        <HomeButton @click="AddText" icon="lucide:plus" label="Текст"/>
+        <HomeButton @click="OpenTextDialogue" icon="lucide:plus" label="Текст"/>
 
         <!-- add file -->
         <FileDialog v-slot="{ open }" @change="clientStore.SetFile">

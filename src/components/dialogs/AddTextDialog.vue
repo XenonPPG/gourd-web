@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import {computed, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import Textarea from "@/components/ui/Textarea.vue";
 import Select from "@/components/ui/Select.vue";
 import {useDialog} from "@/stores/dialog.ts";
 import {FileType} from "@/stores/client.ts";
+import AddTextDialog from "@/components/dialogs/AddTextDialog.vue";
+
+export interface AddTextDialogResult {
+  text: string;
+  type: FileType;
+}
 
 const typeItems = [
   {type: FileType.Text, name: "Текст"},
@@ -32,11 +38,21 @@ const typeName = computed({
 
 const dialog = useDialog();
 dialog.condition = () => text.value.length > 0;
+
+onMounted(() => {
+  if (dialog.value.text?.length > 0 && dialog.value.type) {
+    text.value = dialog.value.text;
+    type.value = dialog.value.type;
+  }
+});
 </script>
 
 <template>
   <div class="flex flex-col gap-1">
-    <Textarea v-model="text" class="h-100 w-200" placeholder="Введите текст"/>
+    <Textarea
+        v-model="text"
+        class="h-100 w-200"
+        placeholder="Введите текст"/>
     <Select v-model="typeName" :items="typeNames"/>
   </div>
 </template>

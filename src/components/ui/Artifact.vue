@@ -3,11 +3,18 @@ import {Icon} from "@iconify/vue";
 import {type Artifact, FileType} from "@/stores/client.ts";
 import {computed, type HTMLAttributes} from "vue";
 
+export interface ArtifactButton {
+  id: string;
+  icon: string;
+  condition?: () => boolean;
+}
+
 const props = defineProps<{
-  artifact: Artifact
+  artifact: Artifact,
+  buttons: ArtifactButton[],
 }>();
 
-const emits = defineEmits(["delete"]);
+const emits = defineEmits(["action"]);
 
 const name = computed(() => {
   const parts = props.artifact.file.name.split(".");
@@ -55,12 +62,15 @@ const gradientFrom = computed(() => styles[props.artifact.type] ?? "from-zinc-60
       </div>
 
       <!-- buttons -->
-      <div class="flex flex-col h-full">
-        <button
-            class="aspect-square rounded-full bg-card p-0.5 hover:cursor-pointer"
-            @click="emits('delete')">
-          <Icon icon="lucide:x" class="text-muted"/>
-        </button>
+      <div class="flex-center h-full gap-1">
+        <template v-for="b in buttons">
+          <button
+              v-if="!b.condition || b.condition()"
+              class="aspect-square rounded bg-zinc-600/40 p-1.5 hover:cursor-pointer"
+              @click="emits('action', b.id)">
+            <Icon :icon="b.icon" class="text-muted size-5"/>
+          </button>
+        </template>
       </div>
     </div>
   </div>

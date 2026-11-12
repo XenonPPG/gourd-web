@@ -18,7 +18,7 @@ export interface GatewayCategoryDTO {
 export interface GatewayProcessRawRequest {
   rules?: string[];
   text?: string;
-  type?: string;
+    type: string;
 }
 
 export interface GatewayRuleDTO {
@@ -213,15 +213,15 @@ export class HttpClient<SecurityDataType = unknown> {
   };
 
   public request = async <T = any, E = any>({
-                                              body,
-                                              secure,
-                                              path,
-                                              type,
-                                              query,
-                                              format,
-                                              baseUrl,
-                                              cancelToken,
-                                              ...params
+                                                body,
+                                                secure,
+                                                path,
+                                                type,
+                                                query,
+                                                format,
+                                                baseUrl,
+                                                cancelToken,
+                                                ...params
                                             }: FullRequestParams): Promise<HttpResponse<T, E>> => {
     const secureParams =
         ((typeof secure === "boolean" ? secure : this.baseApiParams.secure) &&
@@ -236,21 +236,21 @@ export class HttpClient<SecurityDataType = unknown> {
     return this.customFetch(
         `${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`,
         {
-          ...requestParams,
-          headers: {
-            ...(requestParams.headers || {}),
-            ...(type && type !== ContentType.FormData
-                ? {"Content-Type": type}
-                : {}),
-          },
-          signal:
-              (cancelToken
-                  ? this.createAbortSignal(cancelToken)
-                  : requestParams.signal) || null,
-          body:
-              typeof body === "undefined" || body === null
-                  ? null
-                  : payloadFormatter(body),
+            ...requestParams,
+            headers: {
+                ...(requestParams.headers || {}),
+                ...(type && type !== ContentType.FormData
+                    ? {"Content-Type": type}
+                    : {}),
+            },
+            signal:
+                (cancelToken
+                    ? this.createAbortSignal(cancelToken)
+                    : requestParams.signal) || null,
+            body:
+                typeof body === "undefined" || body === null
+                    ? null
+                    : payloadFormatter(body),
         },
     ).then(async (response) => {
       const r = response as HttpResponse<T, E>;
@@ -262,26 +262,26 @@ export class HttpClient<SecurityDataType = unknown> {
           ? r
           : await responseToParse[responseFormat]()
               .then((data) => {
-                if (r.ok) {
-                  r.data = data;
-                } else {
-                  r.error = data;
-                }
-                return r;
+                  if (r.ok) {
+                      r.data = data;
+                  } else {
+                      r.error = data;
+                  }
+                  return r;
               })
               .catch((e) => {
-                r.error = e;
-                return r;
+                  r.error = e;
+                  return r;
               });
 
       if (cancelToken) {
         this.abortControllers.delete(cancelToken);
       }
 
-      if (!response.ok) {
-        throw data;
-      }
-      return data;
+        if (!response.ok) {
+            throw data;
+        }
+        return data;
     });
   };
 }
@@ -308,15 +308,15 @@ export class Api<
      */
     counterList: (params: RequestParams = {}) =>
         this.request<number, any>({
-          path: `/counter`,
-          method: "GET",
-          format: "json",
-          ...params,
+            path: `/counter`,
+            method: "GET",
+            format: "json",
+            ...params,
         }),
   };
   documents = {
     /**
-     * @description Uploads a document file and applies the specified processing rules to it, returning the processed binary content. The file type must be given in the fileType field.
+     * @description Uploads a document file and applies the specified processing rules to it, returning the processed binary content. The file type must be given in the file_type field. At least one rule must be specified in the rules field. Processing metadata is returned in the X-Process-Meta response header: a base64-encoded JSON object, e.g. {"file_type":"docx"}.
      *
      * @tags documents
      * @name FileCreate
@@ -325,28 +325,28 @@ export class Api<
      */
     fileCreate: (
         data: {
-          /**
-           * Document file to process
-           * @format binary
-           */
-          file: File;
-          /** Type of the uploaded document */
-          fileType: string;
-          /** List of rule IDs to apply */
-          rules?: string[];
+            /**
+             * Document file to process
+             * @format binary
+             */
+            file: File;
+            /** Type of the uploaded document */
+            file_type: string;
+            /** List of rule IDs to apply (at least one required) */
+            rules: string[];
         },
         params: RequestParams = {},
     ) =>
         this.request<Blob, Record<string, string>>({
-          path: `/documents/file`,
-          method: "POST",
-          body: data,
-          type: ContentType.FormData,
-          ...params,
+            path: `/documents/file`,
+            method: "POST",
+            body: data,
+            type: ContentType.FormData,
+            ...params,
         }),
 
     /**
-     * @description Applies the specified processing rules to raw text content of a given file type and returns the processed output in the "output" field. Currently only "markdown" is supported as a file type.
+     * @description Applies the specified processing rules to raw text content of a given file type and returns the processed output in the "output" field. Currently only "markdown" is supported as a file type. At least one rule must be specified in the rules field.
      *
      * @tags documents
      * @name PostDocuments
@@ -358,12 +358,12 @@ export class Api<
         params: RequestParams = {},
     ) =>
         this.request<Record<string, string>, Record<string, string>>({
-          path: `/documents/raw`,
-          method: "POST",
-          body: request,
-          type: ContentType.Json,
-          format: "json",
-          ...params,
+            path: `/documents/raw`,
+            method: "POST",
+            body: request,
+            type: ContentType.Json,
+            format: "json",
+            ...params,
         }),
   };
   health = {
@@ -377,9 +377,9 @@ export class Api<
      */
     healthList: (params: RequestParams = {}) =>
         this.request<string, any>({
-          path: `/health`,
-          method: "GET",
-          ...params,
+            path: `/health`,
+            method: "GET",
+            ...params,
         }),
   };
   rules = {
@@ -393,17 +393,17 @@ export class Api<
      */
     rulesList: (
         query?: {
-          /** File type to filter rules by (only rules with an adapter for this type are returned) */
-          filter?: string;
+            /** File type to filter rules by (only rules with an adapter for this type are returned) */
+            filter?: string;
         },
         params: RequestParams = {},
     ) =>
         this.request<GatewayCategoryDTO[], Record<string, string>>({
-          path: `/rules`,
-          method: "GET",
-          query: query,
-          format: "json",
-          ...params,
+            path: `/rules`,
+            method: "GET",
+            query: query,
+            format: "json",
+            ...params,
         }),
   };
 }

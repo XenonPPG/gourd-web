@@ -85,7 +85,7 @@ loadIcon("lucide:arrow-right");
               {
                 id: 'edit',
                 icon: 'lucide:pencil',
-                condition: () => clientStore.file?.type !== FileType.Docx
+                condition: () => clientStore.file?.type !== FileType.Docx && !clientStore.file?.loading
               },
               {
                 id: 'delete',

@@ -2,6 +2,7 @@ import {computed, ref} from 'vue';
 import {defineStore} from 'pinia';
 import Client, {BaseURL} from "@/api/client.ts";
 import type {GatewayCategoryDTO, GatewayRuleDTO} from "@/api/gen/Api.ts";
+import {DecodeBase64Json} from "@/scripts/utils.ts";
 
 export enum FileType {
     Markdown = "md",
@@ -9,7 +10,7 @@ export enum FileType {
     Text = "txt",
 }
 
-export interface Artifact {
+export interface ArtifactType {
     file: File;
     data: ArrayBuffer | null;
     loading: boolean;
@@ -27,8 +28,17 @@ export interface Category {
     rules: Rule[];
 }
 
+export interface ProcessDocumentEventMeta {
+    file_type: string;
+}
+
+export interface ProcessDocumentResult {
+    file: File;
+    type: FileType;
+}
+
 export const useClient = defineStore('client', () => {
-    const file = ref<Artifact | null>();
+    const file = ref<ArtifactType | null>();
 
     const counter = ref<number>();
 
@@ -102,7 +112,7 @@ export const useClient = defineStore('client', () => {
 
     const canProcess = computed(() => !!file.value);
 
-    async function Process() {
+    async function Process(): Promise<ProcessDocumentResult | undefined> {
         if (!canProcess.value) {
             return;
         }
@@ -110,7 +120,7 @@ export const useClient = defineStore('client', () => {
         // auto generated api is broken. lmao
         const form = new FormData();
         form.append("file", file.value!.file);
-        form.append("fileType", file.value!.type);
+        form.append("file_type", file.value!.type);
         for (const id of enabledRuleIds.value) {
             form.append("rules", id);
         }
@@ -125,12 +135,23 @@ export const useClient = defineStore('client', () => {
             throw new Error(body?.error ?? response.statusText);
         }
 
+        const typeHeader = response.headers.get("X-Process-Meta");
+        if (!typeHeader) {
+            throw new Error("X-Process-Meta header required");
+        }
+        const meta = DecodeBase64Json<ProcessDocumentEventMeta>(typeHeader);
+
         const blob = await response.blob();
 
-        return new File([blob], file.value!.file.name, {
+        const f = new File([blob], file.value!.file.name, {
             type: file.value!.file.type,
             lastModified: Date.now(),
         });
+
+        return {
+            file: f,
+            type: meta.file_type as FileType,
+        };
     }
 
     return {

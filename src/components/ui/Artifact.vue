@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {Icon} from "@iconify/vue";
-import {type Artifact, FileType} from "@/stores/client.ts";
+import {type ArtifactType, FileType} from "@/stores/client.ts";
 import {computed, type HTMLAttributes} from "vue";
 
 export interface ArtifactButton {
@@ -10,8 +10,8 @@ export interface ArtifactButton {
 }
 
 const props = defineProps<{
-  artifact: Artifact,
-  buttons: ArtifactButton[],
+  artifact: ArtifactType,
+  buttons?: ArtifactButton[],
 }>();
 
 const emits = defineEmits(["action"]);

@@ -11,6 +11,7 @@ export enum FileType {
 }
 
 export interface ArtifactType {
+    id: string;
     file: File;
     data: ArrayBuffer | null;
     loading: boolean;
@@ -38,7 +39,8 @@ export interface ProcessDocumentResult {
 }
 
 export const useClient = defineStore('client', () => {
-    const file = ref<ArtifactType | null>();
+    const artifacts = ref<ArtifactType[]>([]);
+    const results = ref<ProcessDocumentResult[] | undefined>(undefined);
 
     const counter = ref<number>();
 
@@ -82,87 +84,127 @@ export const useClient = defineStore('client', () => {
         enabledRuleIds.value = newEnabledIds;
     }
 
-    async function SetFile(f: File | null, overrideType?: FileType, isRaw = false) {
+    async function AddFile(f: File | null, overrideType?: FileType, isRaw = false) {
         if (f === null) {
-            file.value = null;
+            artifacts.value = [];
             return;
         }
+        if (!f) {
+            return;
+        }
+        console.log("f", f);
+        console.log("name", f.name);
 
-        const parts = f.name.split(".");
+        const extension = f.name.split(".").pop()?.toLowerCase();
+        const id = crypto.randomUUID();
 
-        file.value = {
+        artifacts.value.push({
+            id,
             file: f,
             data: null,
             loading: true,
-            type: overrideType ?? parts[parts.length - 1] as FileType,
+            type: overrideType ?? extension as FileType,
             isRaw: isRaw,
-        };
+        });
 
-        file.value.data = await f.arrayBuffer();
-        file.value.loading = false;
+        const data = await f.arrayBuffer();
+
+        const art = artifacts.value.find((a) => a.id === id);
+        if (!art) {
+            return;
+        }
+
+        art.data = data;
+        art.loading = false;
     }
 
-    async function SetRaw(content: string, type: FileType) {
-        const file = new File([content], "Артефакт 1", {
+    async function AddFiles(files: File[]) {
+        if (files.length === 0) {
+            artifacts.value = [];
+            return;
+        }
+
+        await Promise.all(files.map((f) => AddFile(f)));
+    }
+
+    function RemoveArtifact(artifact: ArtifactType) {
+        artifacts.value = artifacts.value.filter((a) => a.id !== artifact.id);
+    }
+
+    async function AddRaw(content: string, type: FileType) {
+        const number = artifacts.value.filter((a) => a.isRaw).length + 1;
+        const file = new File([content], `Артефакт ${number}`, {
             type: "text/plain"
         });
 
-        return SetFile(file, type, true);
+        return AddFile(file, type, true);
     }
 
-    const canProcess = computed(() => !!file.value);
+    const canProcess = computed(() => artifacts.value.length > 0);
 
-    async function Process(): Promise<ProcessDocumentResult | undefined> {
+    async function Process(): Promise<ProcessDocumentResult[] | undefined> {
         if (!canProcess.value) {
             return;
         }
 
-        // auto generated api is broken. lmao
-        const form = new FormData();
-        form.append("file", file.value!.file);
-        form.append("file_type", file.value!.type);
-        for (const id of enabledRuleIds.value) {
-            form.append("rules", id);
+        results.value = undefined;
+
+        for (const f of artifacts.value) {
+            // auto generated api is broken. lmao
+            const form = new FormData();
+            form.append("file", f.file);
+            form.append("file_type", f.type);
+            for (const id of enabledRuleIds.value) {
+                form.append("rules", id);
+            }
+
+            const response = await fetch(`${BaseURL}/documents/file`, {
+                method: "POST",
+                body: form,
+            });
+
+            if (!response.ok) {
+                const body = await response.json().catch(() => null);
+                throw new Error(body?.error ?? response.statusText);
+            }
+
+            const typeHeader = response.headers.get("X-Process-Meta");
+            if (!typeHeader) {
+                throw new Error("X-Process-Meta header required");
+            }
+            const meta = DecodeBase64Json<ProcessDocumentEventMeta>(typeHeader);
+
+            const blob = await response.blob();
+
+            const file = new File([blob], f.file.name, {
+                type: f.file.type,
+                lastModified: Date.now(),
+            });
+
+            results.value = [
+                ...(results.value ?? []),
+                {
+                    file: file,
+                    type: meta.file_type as FileType,
+                },
+            ];
         }
 
-        const response = await fetch(`${BaseURL}/documents/file`, {
-            method: "POST",
-            body: form,
-        });
-
-        if (!response.ok) {
-            const body = await response.json().catch(() => null);
-            throw new Error(body?.error ?? response.statusText);
-        }
-
-        const typeHeader = response.headers.get("X-Process-Meta");
-        if (!typeHeader) {
-            throw new Error("X-Process-Meta header required");
-        }
-        const meta = DecodeBase64Json<ProcessDocumentEventMeta>(typeHeader);
-
-        const blob = await response.blob();
-
-        const f = new File([blob], file.value!.file.name, {
-            type: file.value!.file.type,
-            lastModified: Date.now(),
-        });
-
-        return {
-            file: f,
-            type: meta.file_type as FileType,
-        };
+        return results.value;
     }
 
     return {
-        file,
+        artifacts,
+        results,
         counter,
         enabledRuleIds,
+        AddRaw,
+        AddFile,
+        AddFiles,
+        RemoveArtifact,
         FetchCounter,
         categories,
         FetchCategories,
-        SetFile,
-        SetRaw,
         canProcess,
         Process,
     };

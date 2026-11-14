@@ -5,21 +5,21 @@ import {useDropZone} from '@vueuse/core';
 const EXTENSIONS = ['.txt', '.md', '.docx'];
 
 const emit = defineEmits<{
-  change: [file: File | null]
+  change: [files: File[]]
 }>();
 
 defineSlots<{
   default(props: {
-    file: File | null
-    rejected: File | null
+    files: File[]
+    rejected: File[]
     isOverDropZone: boolean
     reset: () => void
   }): unknown
 }>();
 
 const zone = useTemplateRef<HTMLElement>('zone');
-const file = ref<File | null>(null);
-const rejected = ref<File | null>(null);
+const files = ref<File[]>([]);
+const rejected = ref<File[]>([]);
 
 function isAllowed(f: File): boolean {
   const name = f.name.toLowerCase();
@@ -27,28 +27,28 @@ function isAllowed(f: File): boolean {
 }
 
 const {isOverDropZone} = useDropZone(zone, {
-  multiple: false,
+  multiple: true,
   onDrop(dropped) {
-    const [first] = dropped ?? [];
-    if (!first) {
+    if (!dropped || dropped.length === 0) {
       return;
     }
 
-    if (!isAllowed(first)) {
-      rejected.value = first;
+    const accepted = dropped.filter(isAllowed);
+    rejected.value = dropped.filter((f) => !isAllowed(f));
+
+    if (accepted.length === 0) {
       return;
     }
 
-    rejected.value = null;
-    file.value = first;
-    emit('change', first);
+    files.value = accepted;
+    emit('change', accepted);
   },
 });
 
 function reset() {
-  file.value = null;
-  rejected.value = null;
-  emit('change', null);
+  files.value = [];
+  rejected.value = [];
+  emit('change', []);
 }
 
 defineExpose({reset});
@@ -57,7 +57,7 @@ defineExpose({reset});
 <template>
   <div ref="zone">
     <slot
-        :file="file"
+        :files="files"
         :isOverDropZone="isOverDropZone"
         :rejected="rejected"
         :reset="reset"

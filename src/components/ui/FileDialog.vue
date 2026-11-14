@@ -9,26 +9,26 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  change: [file: File | null]
+  change: [files: File[]]
   cancel: []
 }>();
 
 defineSlots<{
   default(props: {
-    file: File | null
-    rejected: File | null
+    files: File[]
+    rejected: File[]
     disabled: boolean
     open: () => void
     reset: () => void
   }): unknown
 }>();
 
-const file = ref<File | null>(null);
-const rejected = ref<File | null>(null);
+const files = ref<File[]>([]);
+const rejected = ref<File[]>([]);
 
 const {open: openDialog, reset: resetDialog, onChange, onCancel} = useFileDialog({
   accept: EXTENSIONS.join(','),
-  multiple: false,
+  multiple: true,
 });
 
 function isAllowed(f: File): boolean {
@@ -41,19 +41,20 @@ onChange((list) => {
     return;
   }
 
-  const picked = list?.[0];
-  if (!picked) {
+  const picked = Array.from(list ?? []);
+  if (picked.length === 0) {
     return;
   }
 
-  if (!isAllowed(picked)) {
-    rejected.value = picked;
+  const accepted = picked.filter(isAllowed);
+  rejected.value = picked.filter((f) => !isAllowed(f));
+
+  if (accepted.length === 0) {
     return;
   }
 
-  rejected.value = null;
-  file.value = picked;
-  emit('change', picked);
+  files.value = accepted;
+  emit('change', accepted);
 });
 
 onCancel(() => {
@@ -69,6 +70,7 @@ function open() {
     return;
   }
 
+  resetDialog();
   openDialog();
 }
 
@@ -78,9 +80,9 @@ function reset() {
   }
 
   resetDialog();
-  file.value = null;
-  rejected.value = null;
-  emit('change', null);
+  files.value = [];
+  rejected.value = [];
+  emit('change', []);
 }
 
 defineExpose({open, reset});
@@ -89,7 +91,7 @@ defineExpose({open, reset});
 <template>
   <slot
       :disabled="props.disabled"
-      :file="file"
+      :files="files"
       :open="open"
       :rejected="rejected"
       :reset="reset"

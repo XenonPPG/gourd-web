@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import {FileType, useClient} from "@/stores/client.ts";
+import {computed} from "vue";
+import {FileType, useClient, type ArtifactType} from "@/stores/client.ts";
 import HomeButton from "@/components/features/home/HomeButton.vue";
 import Card from "@/components/ui/Card.vue";
 import FileDialog from "@/components/ui/FileDialog.vue";
@@ -13,7 +14,10 @@ import {useRouter} from "vue-router";
 const clientStore = useClient();
 const dialog = useDialog();
 
-async function OpenTextDialogue(defaultValue?: AddTextDialogResult) {
+const canContinue = computed(() =>
+    clientStore.artifacts.length > 0 && clientStore.artifacts.every((a) => !a.loading));
+
+async function OpenTextDialogue(defaultValue?: AddTextDialogResult, target?: ArtifactType) {
   let result = await dialog.GetResult<AddTextDialogResult>(
       AddTextDialog,
       "Добавить текст",
@@ -27,28 +31,46 @@ async function OpenTextDialogue(defaultValue?: AddTextDialogResult) {
     return;
   }
 
-  await clientStore.SetRaw(result.text, result.type);
+  if (target) {
+    clientStore.RemoveArtifact(target);
+  }
+
+  await clientStore.AddRaw(result.text, result.type);
 }
 
-function handleArtifactAction(action: string) {
+function handleArtifactAction(action: string, artifact: ArtifactType) {
   switch (action) {
     case "delete":
-      clientStore.SetFile(null);
+      clientStore.RemoveArtifact(artifact);
       break;
     case "edit":
-      if (!clientStore.file?.data ||
-          !(clientStore.file?.type == FileType.Text ||
-              clientStore.file?.type == FileType.Markdown)) {
+      if (!artifact.data ||
+          !(artifact.type == FileType.Text ||
+              artifact.type == FileType.Markdown)) {
         return;
       }
 
       const decoder = new TextDecoder("utf-8");
 
       OpenTextDialogue({
-        text: decoder.decode(clientStore.file.data),
-        type: clientStore.file.type
-      });
+        text: decoder.decode(artifact.data),
+        type: artifact.type
+      }, artifact);
   }
+}
+
+function getArtifactButtons(artifact: ArtifactType) {
+  return [
+    {
+      id: "edit",
+      icon: "lucide:pencil",
+      condition: () => artifact.type !== FileType.Docx && !artifact.loading,
+    },
+    {
+      id: "delete",
+      icon: "lucide:x",
+    },
+  ];
 }
 
 const router = useRouter();
@@ -64,9 +86,9 @@ loadIcon("lucide:arrow-right");
 
       <FileDropZone
           v-slot="{ isOverDropZone }"
-          @change="clientStore.SetFile"
+          @change="clientStore.AddFiles"
           class="size-full flex-center absolute-center">
-        <div v-if="!clientStore.file" class="absolute-center text-center">
+        <div v-if="clientStore.artifacts.length == 0" class="absolute-center text-center">
           <p class="text-muted">Перетащите сюда файлы</p>
         </div>
 
@@ -78,23 +100,14 @@ loadIcon("lucide:arrow-right");
       </FileDropZone>
 
       <!-- artifacts -->
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2 overflow-y-auto">
         <Artifact
-            @action="handleArtifactAction"
-            :buttons="[
-              {
-                id: 'edit',
-                icon: 'lucide:pencil',
-                condition: () => clientStore.file?.type !== FileType.Docx && !clientStore.file?.loading
-              },
-              {
-                id: 'delete',
-                icon: 'lucide:x',
-              },
-            ]"
+            v-for="(artifact, index) in clientStore.artifacts"
+            :key="index"
+            @action="handleArtifactAction($event, artifact)"
+            :buttons="getArtifactButtons(artifact)"
             v-motion-pop
-            v-if="clientStore.file"
-            :artifact="clientStore.file"/>
+            :artifact="artifact"/>
       </div>
     </Card>
 
@@ -107,7 +120,7 @@ loadIcon("lucide:arrow-right");
         <HomeButton @click="OpenTextDialogue" icon="lucide:plus" label="Текст"/>
 
         <!-- add file -->
-        <FileDialog v-slot="{ open }" @change="clientStore.SetFile">
+        <FileDialog v-slot="{ open }" @change="clientStore.AddFiles">
           <HomeButton @click="open" icon="lucide:paperclip" label="Файл"/>
         </FileDialog>
 
@@ -120,7 +133,7 @@ loadIcon("lucide:arrow-right");
         <HomeButton
             @click="router.push('/results')"
             v-motion-pop
-            v-if="clientStore.file && !clientStore.file.loading"
+            v-if="canContinue"
             variant="primary"
             icon="lucide:arrow-right"
             label="Дальше"/>

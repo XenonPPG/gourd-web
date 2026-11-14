@@ -66,6 +66,7 @@ const gradientFrom = computed(() => styles[props.artifact.type] ?? "from-zinc-60
         <template v-for="b in buttons">
           <button
               v-if="!b.condition || b.condition()"
+              v-motion-fade
               class="aspect-square rounded bg-zinc-600/40 p-1.5 hover:cursor-pointer"
               @click="emits('action', b.id)">
             <Icon :icon="b.icon" class="text-muted size-5"/>

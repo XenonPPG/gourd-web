@@ -1,43 +1,57 @@
 <script setup lang="ts">
 import SafeIcon from "@/components/ui/SafeIcon.vue";
 import {onMounted, ref, watch} from "vue";
-import {type ArtifactType, FileType, type ProcessDocumentResult, useClient} from "@/stores/client.ts";
+import {type ArtifactType, FileType, useClient} from "@/stores/client.ts";
 import {useRouter} from "vue-router";
 import Artifact from "@/components/ui/Artifact.vue";
 import Button from "@/components/ui/Button.vue";
 
+const router = useRouter();
 const clientStore = useClient();
-const data = ref<ProcessDocumentResult | null>(null);
+const artifacts = ref<ArtifactType[]>([]);
 
 onMounted(async () => {
   if (!clientStore.canProcess) {
-    await useRouter().push("/");
-  }
-
-  const result = await clientStore.Process();
-  if (result) {
-    data.value = result;
-  }
-});
-
-const artifact = ref<ArtifactType | null>(null);
-
-watch(data, async () => {
-  if (!data.value) {
+    await router.push("/");
     return;
   }
 
-  artifact.value = {
-    file: data.value.file,
-    data: null,
-    loading: true,
-    type: data.value.type,
-    isRaw: false,
-  };
+  artifacts.value = clientStore.artifacts.map((a) => ({...a, loading: true}));
 
-  artifact.value.data = await data.value.file.arrayBuffer();
-  artifact.value.loading = false;
+  await clientStore.Process();
 });
+
+watch(
+    () => clientStore.results?.length ?? 0,
+    (length, oldLength) => {
+      const results = clientStore.results;
+      if (!results) {
+        return;
+      }
+
+      for (let i = oldLength; i < length; i++) {
+        const r = results[i];
+        const id = artifacts.value[i]?.id ?? crypto.randomUUID();
+
+        artifacts.value[i] = {
+          id,
+          file: r!.file,
+          data: null,
+          loading: true,
+          type: r!.type,
+          isRaw: false,
+        };
+
+        r!.file.arrayBuffer().then((data) => {
+          const art = artifacts.value.find((a) => a.id === id);
+          if (art) {
+            art.data = data;
+            art.loading = false;
+          }
+        });
+      }
+    },
+);
 
 async function handleArtifactButtonClick(artifact: ArtifactType, event: string) {
   switch (event) {
@@ -77,26 +91,28 @@ function download(file: File) {
       </div>
 
       <div class="flex-center flex-col gap-2">
-        <SafeIcon v-if="!data" icon="lucide:loader-circle" class="size-20 animate-spin"/>
+        <SafeIcon v-if="!clientStore.results" icon="lucide:loader-circle" class="size-20 animate-spin"/>
         <Artifact
-            v-if="artifact"
-            :artifact="artifact"
+            v-else
+            v-for="a in artifacts"
+            :artifact="a"
             class="w-full"
-            @action="e => handleArtifactButtonClick(artifact!, e)"
+            @action="e => handleArtifactButtonClick(a!, e)"
             :buttons="[
               {
                 id:'copy',
                 icon: 'lucide:copy',
-                condition: () => artifact?.type !== FileType.Docx,
+                condition: () => !a.loading && a?.type !== FileType.Docx,
               },
               {
                 id: 'expand',
                 icon: 'lucide:expand',
-                condition: () => artifact?.type !== FileType.Docx,
+                condition: () => !a.loading && a?.type !== FileType.Docx,
               },
               {
                 id: 'download',
-                icon: 'lucide:arrow-down-to-line'
+                icon: 'lucide:arrow-down-to-line',
+                condition: () => !a.loading
               }
           ]"/>
       </div>

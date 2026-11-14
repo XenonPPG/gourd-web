@@ -4,17 +4,15 @@ import {type ArtifactType, FileType} from "@/stores/client.ts";
 import {computed, type HTMLAttributes} from "vue";
 
 export interface ArtifactButton {
-  id: string;
   icon: string;
   condition?: () => boolean;
+  action: () => void;
 }
 
 const props = defineProps<{
   artifact: ArtifactType,
   buttons?: ArtifactButton[],
 }>();
-
-const emits = defineEmits(["action"]);
 
 const name = computed(() => {
   const parts = props.artifact.file.name.split(".");
@@ -44,10 +42,10 @@ const gradientFrom = computed(() => styles[props.artifact.type] ?? "from-zinc-60
     <div class="flex-center justify-between">
       <div class="flex gap-2">
         <!-- icon -->
-        <div class="bg-light flex-center p-3 rounded-2xl bg-linear-to-t to-zinc-600/20 to-75%"
-             :class="gradientFrom">
+        <div :class="gradientFrom"
+             class="bg-light flex-center p-3 rounded-2xl bg-linear-to-t to-zinc-600/20 to-75%">
           <Icon v-if="props.artifact.loading" class="animate-spin size-7" icon="lucide:loader-circle"/>
-          <Icon v-else class="size-7" :icon="artifact.isRaw ? icons.raw : icons.file"/>
+          <Icon v-else :icon="artifact.isRaw ? icons.raw : icons.file" class="size-7"/>
         </div>
 
         <!-- info -->
@@ -68,7 +66,7 @@ const gradientFrom = computed(() => styles[props.artifact.type] ?? "from-zinc-60
               v-if="!b.condition || b.condition()"
               v-motion-fade
               class="aspect-square rounded bg-zinc-600/40 p-1.5 hover:cursor-pointer"
-              @click="emits('action', b.id)">
+              @click="b.action">
             <Icon :icon="b.icon" class="text-muted size-5"/>
           </button>
         </template>

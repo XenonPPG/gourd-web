@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import {useDialog} from "@/stores/dialog.ts";
 import Card from "@/components/ui/Card.vue";
 import Button from "@/components/ui/Button.vue";
@@ -11,8 +11,8 @@ const dialog = useDialog();
   <Teleport to="body">
     <Transition
         enter-active-class="transition-opacity duration-100 ease-out"
-        leave-active-class="transition-opacity duration-50 ease-in"
         enter-from-class="opacity-0"
+        leave-active-class="transition-opacity duration-50 ease-in"
         leave-to-class="opacity-0">
       <div
           v-if="dialog.open"
@@ -23,17 +23,20 @@ const dialog = useDialog();
             <h1 class="font-bold text-3xl ml-2">{{ dialog.label }}</h1>
 
             <!-- close button -->
-            <Button @click="dialog.Close" variant="ghost" class="aspect-square rounded-full size-min">
-              <SafeIcon icon="lucide:x" class="size-5"/>
+            <Button class="aspect-square rounded-full size-min" variant="ghost" @click="dialog.Close">
+              <SafeIcon class="size-5" icon="lucide:x"/>
             </Button>
           </div>
 
           <component :is="dialog.component"/>
 
           <div class="flex-center gap-2">
-            <Button @click="dialog.Close" variant="secondary" class="bg-dark">Отмена</Button>
-            <Button @click="dialog.Submit" :disabled="dialog.condition === undefined || !dialog.condition()">
-              Подтвердить
+            <Button
+                v-for="b in dialog.buttons"
+                :disabled="typeof b.disabled === 'function' ? b.disabled() : Boolean(b.disabled)"
+                :variant="b.variant"
+                @click="b.action">
+              {{ b.title }}
             </Button>
           </div>
         </Card>

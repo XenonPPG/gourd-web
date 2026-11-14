@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import Button from "@/components/ui/Button.vue";
 import SafeIcon from "@/components/ui/SafeIcon.vue";
 
@@ -16,8 +16,9 @@ const props = withDefaults(defineProps<{
 
 <template>
   <div class="flex-center flex-col relative">
-    <Button v-bind="$attrs" :variant="variant"
-            class="rounded-full aspect-square size-20 flex-center active:scale-105   transition-transform ease-in-out">
+    <Button :variant="variant"
+            class="rounded-full aspect-square size-20 flex-center active:scale-105   transition-transform ease-in-out"
+            v-bind="$attrs">
       <SafeIcon :icon="icon" class="size-9"/>
     </Button>
     <p class="size-min text-center text-sm select-none absolute top-full mt-2">{{ props.label }}</p>

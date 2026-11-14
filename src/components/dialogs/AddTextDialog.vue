@@ -1,10 +1,9 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import {computed, onMounted, ref, watch} from "vue";
 import Textarea from "@/components/ui/Textarea.vue";
 import Select from "@/components/ui/Select.vue";
-import {useDialog} from "@/stores/dialog.ts";
+import {defaultDialogButtons, useDialog} from "@/stores/dialog.ts";
 import {FileType} from "@/stores/client.ts";
-import AddTextDialog from "@/components/dialogs/AddTextDialog.vue";
 
 export interface AddTextDialogResult {
   text: string;
@@ -38,6 +37,7 @@ const typeName = computed({
 
 const dialog = useDialog();
 dialog.condition = () => text.value.length > 0;
+dialog.buttons = defaultDialogButtons;
 
 onMounted(() => {
   if (dialog.value.text?.length > 0 && dialog.value.type) {

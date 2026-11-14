@@ -1,10 +1,11 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import SafeIcon from "@/components/ui/SafeIcon.vue";
 import {onMounted, ref, watch} from "vue";
 import {type ArtifactType, FileType, useClient} from "@/stores/client.ts";
 import {useRouter} from "vue-router";
 import Artifact from "@/components/ui/Artifact.vue";
 import Button from "@/components/ui/Button.vue";
+import ResultsArtifact from "@/components/features/results/ResultsArtifact.vue";
 
 const router = useRouter();
 const clientStore = useClient();
@@ -52,34 +53,6 @@ watch(
       }
     },
 );
-
-async function handleArtifactButtonClick(artifact: ArtifactType, event: string) {
-  switch (event) {
-    case "download":
-      download(artifact.file);
-      break;
-    case "copy":
-      const text = await artifact.file.text();
-      await navigator.clipboard.writeText(text);
-      break;
-    default:
-      console.error("unimplemented: ", event);
-      break;
-  }
-}
-
-function download(file: File) {
-  const url = URL.createObjectURL(file);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = file.name;
-  document.body.appendChild(a);
-  a.click();
-
-  document.removeChild(a);
-  URL.revokeObjectURL(url);
-}
 </script>
 
 <template>
@@ -91,34 +64,16 @@ function download(file: File) {
       </div>
 
       <div class="flex-center flex-col gap-2">
-        <SafeIcon v-if="!clientStore.results" icon="lucide:loader-circle" class="size-20 animate-spin"/>
-        <Artifact
-            v-else
+        <SafeIcon v-if="!clientStore.results" class="size-20 animate-spin" icon="lucide:loader-circle"/>
+        <ResultsArtifact
             v-for="a in artifacts"
+            v-else
             :artifact="a"
-            class="w-full"
-            @action="e => handleArtifactButtonClick(a!, e)"
-            :buttons="[
-              {
-                id:'copy',
-                icon: 'lucide:copy',
-                condition: () => !a.loading && a?.type !== FileType.Docx,
-              },
-              {
-                id: 'expand',
-                icon: 'lucide:expand',
-                condition: () => !a.loading && a?.type !== FileType.Docx,
-              },
-              {
-                id: 'download',
-                icon: 'lucide:arrow-down-to-line',
-                condition: () => !a.loading
-              }
-          ]"/>
+            class="w-full"/>
       </div>
 
-      <RouterLink to="/">
-        <Button class="flex-center text-center gap-2 text-xl size-min mt-10">
+      <RouterLink class="size-min mt-10" to="/">
+        <Button class="flex-center text-center gap-2 text-xl size-min">
           <SafeIcon icon="lucide:arrow-left"/>
           Обратно
         </Button>

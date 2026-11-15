@@ -11,6 +11,6 @@ dialog.buttons = [{
 
 <template>
   <div class="h-100 w-200 p-5 overflow-scroll">
-    <p>{{ dialog.value }}</p>
+    <p class="whitespace-pre-line">{{ dialog.value }}</p>
   </div>
 </template>

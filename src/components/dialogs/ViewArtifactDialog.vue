@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import {useDialog} from "@/stores/dialog.ts";
+import {toDisplayString} from "vue";
 
 const dialog = useDialog();
 dialog.buttons = [
   {
     icon: "lucide:copy",
     action: function (): void {
-      navigator.clipboard.writeText(dialog.value);
+      navigator.clipboard.writeText(toDisplayString(dialog.value));
     },
     variant: "ghost"
   },

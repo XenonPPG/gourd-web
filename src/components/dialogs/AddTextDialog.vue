@@ -23,6 +23,7 @@ watch(() => [text.value, type.value], () => {
     text: text.value,
     type: type.value,
   };
+  dialog.subtitle = `${text.value.length} символов`;
 });
 
 const typeName = computed({

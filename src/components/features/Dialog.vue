@@ -18,7 +18,7 @@ const dialog = useDialog();
           v-if="dialog.open"
           class="fixed inset-0 w-screen h-screen flex-center backdrop-blur-xs bg-black/50"
           @pointerdown.self="dialog.Close">
-        <Card class="flex flex-col items-end gap-2">
+        <Card class="flex flex-col items-end gap-2 p-3">
           <div class="w-full flex items-center justify-between">
             <h1 class="font-bold text-3xl ml-2">{{ dialog.label }}</h1>
 
@@ -30,18 +30,24 @@ const dialog = useDialog();
 
           <component :is="dialog.component"/>
 
-          <div class="flex-center gap-2 items-stretch">
-            <Button
-                v-for="b in dialog.buttons"
-                :disabled="typeof b.disabled === 'function' ? b.disabled() : Boolean(b.disabled)"
-                :variant="b.variant"
-                :class="{'aspect-square':b.icon && !b.title}"
-                @click="b.action">
-              <SafeIcon v-if="b.icon" :icon="b.icon"/>
-              <template v-if="b.title">
-                {{ b.title }}
-              </template>
-            </Button>
+          <div class="flex items-center w-full justify-between">
+            <!-- subtitle -->
+            <p class="text-sm text-muted">{{ dialog.subtitle }}</p>
+
+            <!-- buttons -->
+            <div class="flex-center gap-2 items-stretch">
+              <Button
+                  v-for="b in dialog.buttons"
+                  :disabled="typeof b.disabled === 'function' ? b.disabled() : Boolean(b.disabled)"
+                  :variant="b.variant"
+                  :class="{'aspect-square':b.icon && !b.title}"
+                  @click="b.action">
+                <SafeIcon v-if="b.icon" :icon="b.icon"/>
+                <template v-if="b.title">
+                  {{ b.title }}
+                </template>
+              </Button>
+            </div>
           </div>
         </Card>
       </div>

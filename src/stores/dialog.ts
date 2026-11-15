@@ -36,6 +36,7 @@ export const useDialog = defineStore('dialog', () => {
     const open = ref(false);
     const value = ref<any>();
     const label = ref("");
+    const subtitle = ref("");
     const condition = ref<(() => boolean) | undefined>();
     const buttons = ref<DialogButton[]>([]);
 
@@ -43,6 +44,7 @@ export const useDialog = defineStore('dialog', () => {
     let resolver: ((result: any) => void) | null = null;
 
     function GetResult<T = any>(c: Component, l: string, defaultVal?: T): Promise<T> {
+        subtitle.value = "";
         resolver?.(defaultValue);
 
         defaultValue = defaultVal;
@@ -77,6 +79,7 @@ export const useDialog = defineStore('dialog', () => {
         value,
         buttons,
         label,
+        subtitle,
         condition,
         GetResult,
         Close,

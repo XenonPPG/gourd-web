@@ -3,7 +3,8 @@ import {type Component, markRaw, ref} from "vue";
 import type {ButtonType} from "@/components/ui/Button.vue";
 
 export interface DialogButton {
-    title: string;
+    title?: string;
+    icon?: string;
     action: () => void;
     variant: ButtonType;
     disabled?: boolean | (() => boolean);

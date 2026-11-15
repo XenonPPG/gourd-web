@@ -2,11 +2,20 @@
 import {useDialog} from "@/stores/dialog.ts";
 
 const dialog = useDialog();
-dialog.buttons = [{
-  title: "Закрыть",
-  action: dialog.Close,
-  variant: "secondary-dark"
-}];
+dialog.buttons = [
+  {
+    icon: "lucide:copy",
+    action: function (): void {
+      navigator.clipboard.writeText(dialog.value);
+    },
+    variant: "ghost"
+  },
+  {
+    title: "Закрыть",
+    action: dialog.Close,
+    variant: "secondary-dark"
+  }
+];
 </script>
 
 <template>

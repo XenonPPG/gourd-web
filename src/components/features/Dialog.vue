@@ -23,20 +23,24 @@ const dialog = useDialog();
             <h1 class="font-bold text-3xl ml-2">{{ dialog.label }}</h1>
 
             <!-- close button -->
-            <Button class="aspect-square rounded-full size-min" variant="ghost" @click="dialog.Close">
-              <SafeIcon class="size-5" icon="lucide:x"/>
+            <Button class="aspect-square rounded-full size-min p-3!" variant="ghost-muted" @click="dialog.Close">
+              <SafeIcon class="size-6" icon="lucide:x"/>
             </Button>
           </div>
 
           <component :is="dialog.component"/>
 
-          <div class="flex-center gap-2">
+          <div class="flex-center gap-2 items-stretch">
             <Button
                 v-for="b in dialog.buttons"
                 :disabled="typeof b.disabled === 'function' ? b.disabled() : Boolean(b.disabled)"
                 :variant="b.variant"
+                :class="{'aspect-square':b.icon && !b.title}"
                 @click="b.action">
-              {{ b.title }}
+              <SafeIcon v-if="b.icon" :icon="b.icon"/>
+              <template v-if="b.title">
+                {{ b.title }}
+              </template>
             </Button>
           </div>
         </Card>

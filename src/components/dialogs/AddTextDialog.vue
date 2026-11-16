@@ -4,6 +4,7 @@ import Textarea from "@/components/ui/Textarea.vue";
 import Select from "@/components/ui/Select.vue";
 import {defaultDialogButtons, useDialog} from "@/stores/dialog.ts";
 import {FileType} from "@/stores/client.ts";
+import {Declension} from "@/scripts/utils.ts";
 
 export interface AddTextDialogResult {
   text: string;
@@ -23,7 +24,9 @@ watch(() => [text.value, type.value], () => {
     text: text.value,
     type: type.value,
   };
-  dialog.subtitle = `${text.value.length} символов`;
+  dialog.subtitle = `${text.value.length} ${Declension(text.value.length, {
+    one: "символ", few: "символа", many: "символов"
+  })}`;
 });
 
 const typeName = computed({

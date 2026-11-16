@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import {useDialog} from "@/stores/dialog.ts";
 import {computed, toDisplayString} from "vue";
+import {Declension} from "@/scripts/utils.ts";
 
 const dialog = useDialog();
 const displayString = computed(() => toDisplayString(dialog.value));
-dialog.subtitle = `${displayString.value.length} символов`;
+dialog.subtitle = `${displayString.value.length} ${Declension(displayString.value.length, {
+  one: "символ", few: "символа", many: "символов"
+})}`;
 dialog.buttons = [
   {
     icon: "lucide:copy",

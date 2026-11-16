@@ -10,6 +10,7 @@ import {useDialog} from "@/stores/dialog.ts";
 import {useRouter} from "vue-router";
 import HomeArtifact from "@/components/features/home/HomeArtifact.vue";
 import {OpenTextDialogue} from "@/views/Home/common.ts";
+import {Declension} from "@/scripts/utils.ts";
 
 const clientStore = useClient();
 
@@ -58,9 +59,9 @@ onMounted(clientStore.FetchCounter);
     <div class="flex-center flex-col absolute-center">
       <div class="flex-center flex-col bottom-30 absolute gap-5">
         <h1 class="text-7xl">gourd</h1>
-        <p class="text-sm text-muted">Обработали уже <span class="bg-card p-0.5 rounded-md">{{
+        <p v-if="clientStore.counter" class="text-sm text-muted">Обработали уже <span class="bg-card p-0.5 rounded-md">{{
             clientStore.counter
-          }}</span> документов</p>
+          }}</span> {{ Declension(clientStore.counter, {one: "документ", few: "документа", many: "документов"}) }}</p>
       </div>
 
       <div class="flex-center gap-5">

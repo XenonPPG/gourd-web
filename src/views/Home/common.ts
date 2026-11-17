@@ -19,8 +19,8 @@ export async function OpenTextDialogue(defaultValue?: AddTextDialogResult, targe
     const clientStore = useClient();
 
     if (target) {
-        clientStore.RemoveArtifact(target);
+        await clientStore.EditRaw(target.id, result.text, result.type);
+    } else {
+        await clientStore.AddRaw(result.text, result.type);
     }
-
-    await clientStore.AddRaw(result.text, result.type);
 }

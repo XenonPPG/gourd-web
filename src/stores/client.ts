@@ -84,6 +84,22 @@ export const useClient = defineStore('client', () => {
         enabledRuleIds.value = newEnabledIds;
     }
 
+    function ResolveType(f: File, overrideType?: FileType): FileType {
+        return overrideType ?? f.name.split(".").pop()?.toLowerCase() as FileType;
+    }
+
+    async function LoadArtifactData(id: string, file: File) {
+        const data = await file.arrayBuffer();
+
+        const art = artifacts.value.find((a) => a.id === id);
+        if (!art || art.file !== file) {
+            return;
+        }
+
+        art.data = data;
+        art.loading = false;
+    }
+
     async function AddFile(f: File | null, overrideType?: FileType, isRaw = false) {
         if (f === null) {
             artifacts.value = [];
@@ -92,10 +108,7 @@ export const useClient = defineStore('client', () => {
         if (!f) {
             return;
         }
-        console.log("f", f);
-        console.log("name", f.name);
 
-        const extension = f.name.split(".").pop()?.toLowerCase();
         const id = crypto.randomUUID();
 
         artifacts.value.push({
@@ -103,19 +116,11 @@ export const useClient = defineStore('client', () => {
             file: f,
             data: null,
             loading: true,
-            type: overrideType ?? extension as FileType,
-            isRaw: isRaw,
+            type: ResolveType(f, overrideType),
+            isRaw,
         });
 
-        const data = await f.arrayBuffer();
-
-        const art = artifacts.value.find((a) => a.id === id);
-        if (!art) {
-            return;
-        }
-
-        art.data = data;
-        art.loading = false;
+        await LoadArtifactData(id, f);
     }
 
     async function AddFiles(files: File[]) {
@@ -125,6 +130,33 @@ export const useClient = defineStore('client', () => {
         }
 
         await Promise.all(files.map((f) => AddFile(f)));
+    }
+
+    async function EditArtifact(id: string, f: File, overrideType?: FileType) {
+        const art = artifacts.value.find((a) => a.id === id);
+        if (!art) {
+            return;
+        }
+
+        art.file = f;
+        art.data = null;
+        art.loading = true;
+        art.type = overrideType ?? (art.isRaw ? art.type : ResolveType(f));
+
+        await LoadArtifactData(id, f);
+    }
+
+    async function EditRaw(id: string, content: string, type?: FileType) {
+        const art = artifacts.value.find((a) => a.id === id);
+        if (!art || !art.isRaw) {
+            return;
+        }
+
+        const file = new File([content], art.file.name, {
+            type: "text/plain",
+        });
+
+        return EditArtifact(id, file, type);
     }
 
     function RemoveArtifact(artifact: ArtifactType) {
@@ -201,6 +233,8 @@ export const useClient = defineStore('client', () => {
         AddRaw,
         AddFile,
         AddFiles,
+        EditArtifact,
+        EditRaw,
         RemoveArtifact,
         FetchCounter,
         categories,

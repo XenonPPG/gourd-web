@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import Button from "@/components/ui/Button.vue";
-import {onBeforeUnmount, onMounted, ref, watch} from "vue";
+import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import SafeIcon from "@/components/ui/SafeIcon.vue";
 import Card from "@/components/ui/Card.vue";
 
@@ -9,10 +9,11 @@ const props = defineProps<{
   disabled?: boolean
 }>();
 
-const selected = ref(0);
 const open = ref(false);
 
 const model = defineModel();
+
+const selected = computed(() => props.items.indexOf(model.value));
 
 const root = ref<HTMLElement | null>(null);
 const dropdown = ref<HTMLElement | null>(null);
@@ -65,11 +66,9 @@ watch(open, (isOpen) => {
 onBeforeUnmount(removeListeners);
 
 onMounted(() => {
-  model.value = props.items[0];
-});
-
-watch(() => selected.value, () => {
-  model.value = props.items[selected.value];
+  if (selected.value === -1) {
+    model.value = props.items[0];
+  }
 });
 
 watch(() => props.disabled, () => {
@@ -78,10 +77,7 @@ watch(() => props.disabled, () => {
 
 function select(index: number) {
   open.value = false;
-
-  if (selected.value !== index) {
-    selected.value = index;
-  }
+  model.value = props.items[index];
 }
 </script>
 

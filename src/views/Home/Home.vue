@@ -47,7 +47,7 @@ onMounted(clientStore.FetchCounter);
       </FileDropZone>
 
       <!-- artifacts -->
-      <div class="flex flex-col gap-2 overflow-y-auto">
+      <div class="flex flex-col gap-2">
         <HomeArtifact
             v-for="(artifact, i) in clientStore.artifacts"
             :key="i"

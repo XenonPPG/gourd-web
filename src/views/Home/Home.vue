@@ -6,7 +6,6 @@ import Card from "@/components/ui/Card.vue";
 import FileDialog from "@/components/ui/FileDialog.vue";
 import FileDropZone from "@/components/ui/FileDropZone.vue";
 import {Icon, loadIcon} from "@iconify/vue";
-import {useDialog} from "@/stores/dialog.ts";
 import {useRouter} from "vue-router";
 import HomeArtifact from "@/components/features/home/HomeArtifact.vue";
 import {OpenTextDialogue} from "@/views/Home/common.ts";
@@ -18,6 +17,8 @@ const canContinue = computed(() =>
     clientStore.artifacts.length > 0 && clientStore.artifacts.every((a) => !a.loading));
 
 const router = useRouter();
+
+const forwardToResults = computed(() => clientStore.results && clientStore.results.length > 0);
 
 loadIcon("lucide:arrow-right");
 
@@ -56,15 +57,20 @@ onMounted(clientStore.FetchCounter);
     </Card>
 
     <!-- central menu -->
-    <div class="flex-center flex-col absolute-center">
-      <div class="flex-center flex-col bottom-30 absolute gap-5">
-        <h1 class="text-7xl">gourd</h1>
-        <p v-if="clientStore.counter" class="text-sm text-muted">Обработали уже <span class="bg-card p-0.5 rounded-md">{{
-            clientStore.counter
-          }}</span> {{ Declension(clientStore.counter, {one: "документ", few: "документа", many: "документов"}) }}</p>
-      </div>
+    <div class="absolute-center">
+      <div class="relative flex-center gap-5">
+        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-12
+                    flex-center flex-col gap-5 whitespace-nowrap">
+          <h1 class="text-7xl">gourd</h1>
+          <p class="text-sm text-muted min-h-5">
+            <template v-if="clientStore.counter">
+              Обработали уже
+              <span class="bg-card p-0.5 rounded-md">{{ clientStore.counter }}</span>
+              {{ Declension(clientStore.counter, {one: "документ", few: "документа", many: "документов"}) }}
+            </template>
+          </p>
+        </div>
 
-      <div class="flex-center gap-5">
         <!-- add text -->
         <HomeButton icon="lucide:plus" label="Текст" @click="OpenTextDialogue"/>
 
@@ -79,13 +85,14 @@ onMounted(clientStore.FetchCounter);
         </RouterLink>
 
         <!-- forward -->
-        <HomeButton
-            v-if="canContinue"
-            v-motion-pop
-            icon="lucide:arrow-right"
-            label="Дальше"
-            variant="primary"
-            @click="router.push('/results')"/>
+        <div v-if="canContinue" class="absolute left-full top-0 ml-5">
+          <HomeButton
+              v-motion-pop
+              :icon="forwardToResults ? 'lucide:check' : 'lucide:arrow-right'"
+              :label="forwardToResults ? `Результаты ×${clientStore.results!.length}` : 'Дальше'"
+              variant="primary"
+              @click="router.push('/results')"/>
+        </div>
       </div>
     </div>
   </div>

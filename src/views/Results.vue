@@ -38,18 +38,10 @@ watch(
           id,
           file: r!.file,
           data: null,
-          loading: true,
+          loading: false,
           type: r!.type,
           isRaw: false,
         };
-
-        r!.file.arrayBuffer().then((data) => {
-          const art = artifacts.value.find((a) => a.id === id);
-          if (art) {
-            art.data = data;
-            art.loading = false;
-          }
-        });
       }
     },
 );
@@ -64,10 +56,9 @@ watch(
       </div>
 
       <div class="flex-center flex-col gap-2">
-        <SafeIcon v-if="!clientStore.results" class="size-20 animate-spin" icon="lucide:loader-circle"/>
         <ResultsArtifact
             v-for="a in artifacts"
-            v-else
+            :key="a.id"
             :artifact="a"
             class="w-full"/>
       </div>

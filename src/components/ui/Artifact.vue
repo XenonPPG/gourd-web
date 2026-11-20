@@ -42,8 +42,8 @@ const gradientFrom = computed(() => styles[props.artifact.type] ?? "from-zinc-60
     <div class="flex-center justify-between">
       <div class="flex gap-2">
         <!-- icon -->
-        <div :class="gradientFrom"
-             class="bg-light flex-center p-3 rounded-2xl bg-linear-to-t to-zinc-600/20 to-75%">
+        <div :class="{[gradientFrom as string]:!props.artifact.loading}"
+             class="bg-light flex-center p-3 rounded-2xl bg-linear-to-t to-zinc-600/20 to-75% transition-colors duration-600">
           <Icon v-if="props.artifact.loading" class="animate-spin size-7" icon="lucide:loader-circle"/>
           <Icon v-else :icon="artifact.isRaw ? icons.raw : icons.file" class="size-7"/>
         </div>

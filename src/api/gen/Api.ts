@@ -10,23 +10,23 @@
  * ---------------------------------------------------------------
  */
 
-export interface GatewayCategoryDTO {
+export interface DtoCategoryDTO {
     name?: string;
-    rules?: GatewayRuleDTO[];
+    rules?: DtoRuleDTO[];
+}
+
+export interface DtoRuleDTO {
+    available_formats?: string[];
+    description?: string;
+    enabled_by_default?: boolean;
+    id?: string;
+    name?: string;
 }
 
 export interface GatewayProcessRawRequest {
     rules?: string[];
     text?: string;
     type: string;
-}
-
-export interface GatewayRuleDTO {
-    available_formats?: string[];
-    description?: string;
-    enabled_by_default?: boolean;
-    id?: string;
-    name?: string;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -86,12 +86,57 @@ export class HttpClient<SecurityDataType = unknown> {
     private securityData: SecurityDataType | null = null;
     private securityWorker?: ApiConfig<SecurityDataType>["securityWorker"];
     private abortControllers = new Map<CancelToken, AbortController>();
+    private customFetch = (...fetchParams: Parameters<typeof fetch>) =>
+        fetch(...fetchParams);
+
     private baseApiParams: RequestParams = {
         credentials: "same-origin",
         headers: {},
         redirect: "follow",
         referrerPolicy: "no-referrer",
     };
+
+    constructor(apiConfig: ApiConfig<SecurityDataType> = {}) {
+        Object.assign(this, apiConfig);
+    }
+
+    public setSecurityData = (data: SecurityDataType | null) => {
+        this.securityData = data;
+    };
+
+    protected encodeQueryParam(key: string, value: any) {
+        const encodedKey = encodeURIComponent(key);
+        return `${encodedKey}=${encodeURIComponent(typeof value === "number" ? value : `${value}`)}`;
+    }
+
+    protected addQueryParam(query: QueryParamsType, key: string) {
+        return this.encodeQueryParam(key, query[key]);
+    }
+
+    protected addArrayQueryParam(query: QueryParamsType, key: string) {
+        const value = query[key];
+        return value.map((v: any) => this.encodeQueryParam(key, v)).join("&");
+    }
+
+    protected toQueryString(rawQuery?: QueryParamsType): string {
+        const query = rawQuery || {};
+        const keys = Object.keys(query).filter(
+            (key) => "undefined" !== typeof query[key],
+        );
+        return keys
+            .map((key) =>
+                Array.isArray(query[key])
+                    ? this.addArrayQueryParam(query, key)
+                    : this.addQueryParam(query, key),
+            )
+            .join("&");
+    }
+
+    protected addQueryParams(rawQuery?: QueryParamsType): string {
+        const queryString = this.toQueryString(rawQuery);
+        return queryString ? `?${queryString}` : "";
+    }
+
     private contentFormatters: Record<ContentType, (input: any) => any> = {
         [ContentType.Json]: (input: any) =>
             input !== null && (typeof input === "object" || typeof input === "string")
@@ -126,12 +171,36 @@ export class HttpClient<SecurityDataType = unknown> {
         [ContentType.UrlEncoded]: (input: any) => this.toQueryString(input),
     };
 
-    constructor(apiConfig: ApiConfig<SecurityDataType> = {}) {
-        Object.assign(this, apiConfig);
+    protected mergeRequestParams(
+        params1: RequestParams,
+        params2?: RequestParams,
+    ): RequestParams {
+        return {
+            ...this.baseApiParams,
+            ...params1,
+            ...(params2 || {}),
+            headers: {
+                ...(this.baseApiParams.headers || {}),
+                ...(params1.headers || {}),
+                ...((params2 && params2.headers) || {}),
+            },
+        };
     }
 
-    public setSecurityData = (data: SecurityDataType | null) => {
-        this.securityData = data;
+    protected createAbortSignal = (
+        cancelToken: CancelToken,
+    ): AbortSignal | undefined => {
+        if (this.abortControllers.has(cancelToken)) {
+            const abortController = this.abortControllers.get(cancelToken);
+            if (abortController) {
+                return abortController.signal;
+            }
+            return void 0;
+        }
+
+        const abortController = new AbortController();
+        this.abortControllers.set(cancelToken, abortController);
+        return abortController.signal;
     };
 
     public abortRequest = (cancelToken: CancelToken) => {
@@ -215,74 +284,6 @@ export class HttpClient<SecurityDataType = unknown> {
             return data;
         });
     };
-
-    protected encodeQueryParam(key: string, value: any) {
-        const encodedKey = encodeURIComponent(key);
-        return `${encodedKey}=${encodeURIComponent(typeof value === "number" ? value : `${value}`)}`;
-    }
-
-    protected addQueryParam(query: QueryParamsType, key: string) {
-        return this.encodeQueryParam(key, query[key]);
-    }
-
-    protected addArrayQueryParam(query: QueryParamsType, key: string) {
-        const value = query[key];
-        return value.map((v: any) => this.encodeQueryParam(key, v)).join("&");
-    }
-
-    protected toQueryString(rawQuery?: QueryParamsType): string {
-        const query = rawQuery || {};
-        const keys = Object.keys(query).filter(
-            (key) => "undefined" !== typeof query[key],
-        );
-        return keys
-            .map((key) =>
-                Array.isArray(query[key])
-                    ? this.addArrayQueryParam(query, key)
-                    : this.addQueryParam(query, key),
-            )
-            .join("&");
-    }
-
-    protected addQueryParams(rawQuery?: QueryParamsType): string {
-        const queryString = this.toQueryString(rawQuery);
-        return queryString ? `?${queryString}` : "";
-    }
-
-    protected mergeRequestParams(
-        params1: RequestParams,
-        params2?: RequestParams,
-    ): RequestParams {
-        return {
-            ...this.baseApiParams,
-            ...params1,
-            ...(params2 || {}),
-            headers: {
-                ...(this.baseApiParams.headers || {}),
-                ...(params1.headers || {}),
-                ...((params2 && params2.headers) || {}),
-            },
-        };
-    }
-
-    protected createAbortSignal = (
-        cancelToken: CancelToken,
-    ): AbortSignal | undefined => {
-        if (this.abortControllers.has(cancelToken)) {
-            const abortController = this.abortControllers.get(cancelToken);
-            if (abortController) {
-                return abortController.signal;
-            }
-            return void 0;
-        }
-
-        const abortController = new AbortController();
-        this.abortControllers.set(cancelToken, abortController);
-        return abortController.signal;
-    };
-
-    private customFetch = (...fetchParams: Parameters<typeof fetch>) =>
-        fetch(...fetchParams);
 }
 
 /**
@@ -315,11 +316,11 @@ export class Api<
     };
     documents = {
         /**
-         * @description Uploads a document file and applies the specified processing rules to it, returning the processed binary content. The file type must be given in the file_type field. At least one rule must be specified in the rules field. Processing metadata is returned in the X-Process-Meta response header: a base64-encoded JSON object, e.g. {"file_type":"docx"}.
+         * @description Uploads a domain file and applies the specified processing rules to it, returning the processed binary content. The file type must be given in the file_type field. At least one rule must be specified in the rules field. Processing metadata is returned in the X-Process-Meta response header: a base64-encoded JSON object with the file type and the results of the applied rules, e.g. {"file_type":"docx","results":[{"key":"some_rule","result":"..."}]}. The shape of each "result" depends on the rule that produced it.
          *
          * @tags documents
          * @name FileCreate
-         * @summary Process a document file
+         * @summary Process a domain file
          * @request POST:/documents/file
          */
         fileCreate: (
@@ -329,7 +330,7 @@ export class Api<
                  * @format binary
                  */
                 file: File;
-                /** Type of the uploaded document */
+                /** Type of the uploaded domain */
                 file_type: string;
                 /** List of rule IDs to apply (at least one required) */
                 rules: string[];
@@ -345,7 +346,7 @@ export class Api<
             }),
 
         /**
-         * @description Applies the specified processing rules to raw text content of a given file type and returns the processed output in the "output" field. Currently only "markdown" is supported as a file type. At least one rule must be specified in the rules field.
+         * @description Applies the specified processing rules to raw text content of a given file type. Currently only "markdown" is supported as a file type. At least one rule must be specified in the rules field. The response contains the processed text in the "output" field and the results of the applied rules in the "result" field.
          *
          * @tags documents
          * @name PostDocuments
@@ -356,7 +357,7 @@ export class Api<
             request: GatewayProcessRawRequest,
             params: RequestParams = {},
         ) =>
-            this.request<Record<string, string>, Record<string, string>>({
+            this.request<Record<string, any>, Record<string, string>>({
                 path: `/documents/raw`,
                 method: "POST",
                 body: request,
@@ -383,24 +384,17 @@ export class Api<
     };
     rules = {
         /**
-         * @description Returns the registry of document processing rules grouped by category. If the optional `filter` query parameter is provided, only rules that have an adapter for that file type are included; otherwise all rules are returned. Each category contains its name and a list of rules; each rule has an id, name, description, default enabled state and the list of file formats it is available for. Categories without applicable rules are omitted from the response. If no rules are found (the registry is empty or nothing matches the filter), the endpoint responds with 400.
+         * @description Returns the registry of domain processing rules grouped by category. Each category contains its name and a list of rules; each rule has an id, name, description, default enabled state and the list of file formats it is available for. The categories are returned under the `categories` key of the response object. If the rules cannot be built from the registry, the endpoint responds with 500.
          *
          * @tags rules
          * @name RulesList
          * @summary List available rules
          * @request GET:/rules
          */
-        rulesList: (
-            query?: {
-                /** File type to filter rules by (only rules with an adapter for this type are returned) */
-                filter?: string;
-            },
-            params: RequestParams = {},
-        ) =>
-            this.request<GatewayCategoryDTO[], Record<string, string>>({
+        rulesList: (params: RequestParams = {}) =>
+            this.request<Record<string, DtoCategoryDTO[]>, Record<string, string>>({
                 path: `/rules`,
                 method: "GET",
-                query: query,
                 format: "json",
                 ...params,
             }),

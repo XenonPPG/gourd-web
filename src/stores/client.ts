@@ -1,7 +1,7 @@
 import {computed, ref} from 'vue';
 import {defineStore} from 'pinia';
 import Client, {BaseURL} from "@/api/client.ts";
-import type {GatewayCategoryDTO, GatewayRuleDTO} from "@/api/gen/Api.ts";
+import type {DtoCategoryDTO, DtoRuleDTO} from "@/api/gen/Api.ts";
 import {DecodeBase64Json} from "@/scripts/utils.ts";
 
 export enum FileType {
@@ -20,12 +20,12 @@ export interface ArtifactType {
 }
 
 export interface Rule {
-    rule: GatewayRuleDTO;
+    rule: DtoRuleDTO;
     enabled: boolean | null;
 }
 
 export interface Category {
-    category: GatewayCategoryDTO;
+    category: DtoCategoryDTO;
     rules: Rule[];
 }
 
@@ -54,11 +54,14 @@ export const useClient = defineStore('client', () => {
 
     async function FetchCategories() {
         const response = await Client.rules.rulesList();
+        if (!response.data?.categories || response.data.categories.length === 0) {
+            return;
+        }
 
         const newCategories: Category[] = [];
         const newEnabledIds: string[] = [];
 
-        for (const category of response.data) {
+        for (const category of response.data.categories) {
             const rules: Rule[] = [];
 
             for (const rule of category.rules!) {

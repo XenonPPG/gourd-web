@@ -48,23 +48,16 @@ watch(
 </script>
 
 <template>
-  <div class="size-full flex-center flex-col gap-20">
-    <div class="flex flex-col gap-10 w-100">
-      <div class="flex-center flex-col gap-2">
-        <h1 class="text-4xl font-bold">Результаты</h1>
-        <p class="text-sm text-muted">Мы добавим более красивую страницу позже</p>
+  <div class="flex flex-col size-full p-10 gap-10">
+    <h1 class="text-5xl font-bold">Результаты</h1>
+
+    <div class="flex flex-col gap-5 items-end w-min">
+      <div class="flex-center flex-col w-110 gap-2">
+        <ResultsArtifact v-for="a in artifacts" :artifact="a"/>
       </div>
 
-      <div class="flex-center flex-col gap-2">
-        <ResultsArtifact
-            v-for="a in artifacts"
-            :key="a.id"
-            :artifact="a"
-            class="w-full"/>
-      </div>
-
-      <RouterLink class="size-min mt-10" to="/">
-        <Button class="flex-center text-center gap-2 text-xl size-min">
+      <RouterLink to="/">
+        <Button class="flex-center gap-1 text-xl">
           <SafeIcon icon="lucide:arrow-left"/>
           Обратно
         </Button>
